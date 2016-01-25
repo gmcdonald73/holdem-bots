@@ -64,8 +64,7 @@ namespace CallerBot
                 // the controller will validate your action and try to honour your action if possible but may change it (e.g. it won't let you fold if checking is possible)
                 // amount only matters if you are raising (if calling the controller will use the correct amount). 
                 // If raising, minRaise and maxRaise are the total amount required to put into the pot (i.e. it includes the call amount)
-                // Side pots aren't implemented so if you run out of money you can still call (but not raise) and your stack size may go negative. 
-                // If your stack size is still 0 or negative at the end of the hand then you are out of the game.
+                // Side pots are now implemented so you can go all in and call or raise even if you have less than minimum
                 yourAction = eActionType.ACTION_CALL;
                 amount = callAmount;
             }

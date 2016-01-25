@@ -46,6 +46,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Deck.cs" />
+    <Compile Include="HandRanker.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="PotManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServerHoldemPlayer.cs" />

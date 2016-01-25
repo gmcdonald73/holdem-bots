@@ -13,7 +13,6 @@ namespace HoldemController
     {
         private IHoldemPlayer player;
         public int StackSize { get; set; }
-        public int BetsThisBettingRound { get; set; }
         public bool IsActive { get; set; }
         public bool IsAlive { get; set; }
 
@@ -25,7 +24,6 @@ namespace HoldemController
         {
             PlayerNum = pPlayerNum;
             StackSize = pStackSize;
-            BetsThisBettingRound = 0;
             IsActive = true;
             IsAlive = true;
             _holeCards = new Card[2];
@@ -68,7 +66,7 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, playerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, playerNum, e.Message));
             }
         }
 
@@ -84,7 +82,7 @@ namespace HoldemController
                 }
                 catch (Exception e)
                 {
-                    System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                    Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
                 }
 
                 return sName;
@@ -103,7 +101,7 @@ namespace HoldemController
                 }
                 catch (Exception e)
                 {
-                    System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                    Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
                 }
 
                 return observer;
@@ -120,7 +118,7 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
 
         }
@@ -136,7 +134,7 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
 
         }
@@ -146,15 +144,15 @@ namespace HoldemController
             return _holeCards;
         }
 
-        public void SeeAction(eStage stage, int playerNum, eActionType action, int amount)
+        public void SeeAction(eStage stage, int playerDoingAction, eActionType action, int amount)
         {
             try
             {
-                player.SeeAction(stage, playerNum, action, amount);
+                player.SeeAction(stage, playerDoingAction, action, amount);
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
 
         }
@@ -171,7 +169,7 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
 
             ValidateAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, ref playersAction, ref playersBetAmount);
@@ -186,9 +184,43 @@ namespace HoldemController
                 {
                     playersAction = eActionType.ACTION_SHOW;
                 }
+
+                playersBetAmount = 0;
             }
             else
             {
+                bool bAllIn = false;
+
+                if (playersBetAmount < 0)
+                {
+                    playersBetAmount = 0;
+                }
+
+                if (playersAction == eActionType.ACTION_RAISE)
+                {
+/*
+                    // We shouldn't increase a players bet - but can reduce it if outside limits
+                    if (playersBetAmount < minRaise)
+                    {
+                        playersBetAmount = minRaise;
+                    }
+*/
+                    if (playersBetAmount > maxRaise)
+                    {
+                        playersBetAmount = maxRaise;
+                    }
+                }
+
+                if (playersBetAmount > StackSize)
+                {
+                    playersBetAmount = StackSize;
+                }
+
+                if (playersBetAmount == StackSize)
+                {
+                    bAllIn = true;
+                }
+
                 // -- Validate action - prevent player from doing anything illegal
                 if (playersAction != eActionType.ACTION_FOLD &&
                     playersAction != eActionType.ACTION_CHECK &&
@@ -211,9 +243,15 @@ namespace HoldemController
                     playersAction = eActionType.ACTION_CALL;
                 }
 
-                if (playersAction == eActionType.ACTION_RAISE && StackSize < minRaise)
+                if (playersAction == eActionType.ACTION_RAISE && playersBetAmount <= callAmount)
                 {
                     // not enough chips to raise - just call
+                    playersAction = eActionType.ACTION_CALL;
+                }
+
+                if (playersAction == eActionType.ACTION_RAISE && playersBetAmount > callAmount && playersBetAmount < minRaise && !bAllIn)
+                {
+                    // not enough chips to raise - just call unless going allin
                     playersAction = eActionType.ACTION_CALL;
                 }
 
@@ -228,36 +266,21 @@ namespace HoldemController
                     // change call to check if callAmount = 0
                     playersAction = eActionType.ACTION_CHECK;
                 }
-            }
 
-            // *** Fix betAmount
-            if (playersAction == eActionType.ACTION_FOLD || playersAction == eActionType.ACTION_CHECK || playersAction == eActionType.ACTION_SHOW)
-            {
-                playersBetAmount = 0;
-            }
-
-            if(playersAction == eActionType.ACTION_CALL)
-            { 
-                playersBetAmount = callAmount;
-            }
-
-            if (playersAction == eActionType.ACTION_RAISE)
-            {
-                // They are trying to raise and have at least minRaise chips
-
-                if (playersBetAmount < minRaise)
+                // *** Fix betAmount
+                if (playersAction == eActionType.ACTION_FOLD || playersAction == eActionType.ACTION_CHECK)
                 {
-                    playersBetAmount = minRaise;
+                    playersBetAmount = 0;
                 }
 
-                if (playersBetAmount > maxRaise)
+                if (playersAction == eActionType.ACTION_CALL)
                 {
-                    playersBetAmount = maxRaise;
-                }
+                    playersBetAmount = callAmount;
 
-                if (playersBetAmount > StackSize)
-                {
-                    playersBetAmount = StackSize;
+                    if (playersBetAmount > StackSize)
+                    {
+                        playersBetAmount = StackSize;
+                    }
                 }
             }
         }
@@ -270,19 +293,19 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
         }
 
-        public void SeePlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
+        public void SeePlayerHand(int playerShowingHand, Card hole1, Card hole2, Hand bestHand)
         {
             try
             {
-                player.SeePlayerHand(playerNum, hole1, hole2, bestHand);
+                player.SeePlayerHand(playerShowingHand, hole1, hole2, bestHand);
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
         }
 
@@ -294,7 +317,7 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                System.Console.WriteLine("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message);
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", System.Reflection.MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
         }
     }
