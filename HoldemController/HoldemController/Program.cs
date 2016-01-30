@@ -27,7 +27,9 @@ namespace HoldemController
         private int littleBlindSize = 100;
         private int bigBlindSize = 200;
         private int startingStack = 5000;
-        private int maxNumRaisesPerBettingRound = 4; 
+        private int maxNumRaisesPerBettingRound = 4;
+        private int maxHands = -1;
+        private int doubleBlindFrequency = -1;
 
         static void Main(string[] args)
         {
@@ -155,14 +157,18 @@ namespace HoldemController
                 // Kill off broke players & check if only one player left
                 KillBrokePlayers();
 
-                if (GetNumLivePlayers() > 1)
+                if (GetNumLivePlayers() == 1)
                 {
-                    // Move to next dealer 
-                    MoveDealerAndBlinds();
+                    bDone = true;
+                }
+                else if (maxHands > 0 && handNum >= maxHands)
+                {
+                    bDone = true;
                 }
                 else
                 {
-                    bDone = true;
+                    // Move to next dealer 
+                    MoveDealerAndBlinds();
                 }
 
 /*
@@ -183,19 +189,62 @@ namespace HoldemController
             Logger.Log("--- *** CONFIG *** ---");
             Logger.Log(doc.ToString());
 
-            var gameRules = doc.Element("HoldemConfig").Element("GameRules");
+            var holdemConfig = doc.Element("HoldemConfig");
+
+            if(holdemConfig == null)
+            {
+                throw new Exception("Unable to find HoldemConfig element in HoldemConfig.xml");
+            }
+
+            var gameRules = holdemConfig.Element("GameRules");
+
+            if (gameRules == null)
+            {
+                throw new Exception("Unable to find GameRules element in HoldemConfig.xml");
+            }
 
             // Get game rules
-            littleBlindSize = Convert.ToInt32(gameRules.Attribute("littleBlind").Value);
-            bigBlindSize = Convert.ToInt32(gameRules.Attribute("bigBlind").Value);
-            startingStack = Convert.ToInt32(gameRules.Attribute("startingStack").Value);
-            maxNumRaisesPerBettingRound = Convert.ToInt32(gameRules.Attribute("maxNumRaisesPerBettingRound").Value); 
+            if (gameRules.Attribute("littleBlind") != null)
+            {
+                littleBlindSize = Convert.ToInt32(gameRules.Attribute("littleBlind").Value);
+            }
+
+            if (gameRules.Attribute("bigBlind") != null)
+            {
+                bigBlindSize = Convert.ToInt32(gameRules.Attribute("bigBlind").Value);
+            }
+
+            if (gameRules.Attribute("startingStack") != null)
+            {
+                startingStack = Convert.ToInt32(gameRules.Attribute("startingStack").Value);
+            }
+
+            if (gameRules.Attribute("maxNumRaisesPerBettingRound") != null)
+            {
+                maxNumRaisesPerBettingRound = Convert.ToInt32(gameRules.Attribute("maxNumRaisesPerBettingRound").Value);
+            }
+
+            if (gameRules.Attribute("maxHands") != null)
+            {
+                maxHands = Convert.ToInt32(gameRules.Attribute("maxHands").Value);
+            }
+
+            if (gameRules.Attribute("doubleBlindFrequency") != null)
+            {
+                doubleBlindFrequency = Convert.ToInt32(gameRules.Attribute("doubleBlindFrequency").Value);
+            }
 
             // Create players
             var xplayers = doc.Descendants("Player");
             int i = 0;
+            int numLivePlayers = 0;
 
             numPlayers = xplayers.Count();
+
+            if(numPlayers == 0)
+            {
+                throw new Exception("No Player elements found in HoldemConfig.xml");
+            }
             players = new ServerHoldemPlayer[numPlayers];
 
             foreach (var player in xplayers)
@@ -211,12 +260,30 @@ namespace HoldemController
                 }
 
                 players[i] = new ServerHoldemPlayer(i, playersStartingStack, player.Attribute("dll").Value);
+
+                if(players[i].IsAlive)
+                {
+                    numLivePlayers++;
+                }
+                
                 i++;
+            }
+
+            if(numLivePlayers < 2 || numLivePlayers > 23)
+            {
+                throw new Exception(String.Format("The number of live (non observer) players found is {0}. It must be between 2 and 23", numLivePlayers));
             }
         }
 
         private void InitHand(int handNum)
         {
+            // Double the blinds if required. Do this here because later on we may want to include this in info to players
+            if (doubleBlindFrequency > 0 && handNum % doubleBlindFrequency == 0)
+            {
+                littleBlindSize *= 2;
+                bigBlindSize *= 2;
+            }
+            
             PlayerInfo[] playerInfo = new PlayerInfo[numPlayers];
 
             Logger.Log("");

@@ -89,23 +89,28 @@ namespace HoldemPlayerContract
 
         public string RankStr()
         {
-	        switch(Rank)
-	        {
-	        case eRankType.RANK_ACE: return "A";
-	        case eRankType.RANK_KING: return "K";
-	        case eRankType.RANK_QUEEN: return "Q";
-	        case eRankType.RANK_JACK: return "J";
-	        case eRankType.RANK_TEN: return "10";
-	        case eRankType.RANK_NINE: return "9";
-	        case eRankType.RANK_EIGHT: return "8";
-	        case eRankType.RANK_SEVEN: return "7";
-	        case eRankType.RANK_SIX: return "6";
-	        case eRankType.RANK_FIVE: return "5";
-	        case eRankType.RANK_FOUR: return "4";
-	        case eRankType.RANK_THREE: return "3";
-	        case eRankType.RANK_TWO: return "2";
-	        default: return "?";
-	        };
+            return RankToString(Rank);
+        }
+
+        static public string RankToString(eRankType pRank)
+        {
+            switch (pRank)
+            {
+                case eRankType.RANK_ACE: return "A";
+                case eRankType.RANK_KING: return "K";
+                case eRankType.RANK_QUEEN: return "Q";
+                case eRankType.RANK_JACK: return "J";
+                case eRankType.RANK_TEN: return "10";
+                case eRankType.RANK_NINE: return "9";
+                case eRankType.RANK_EIGHT: return "8";
+                case eRankType.RANK_SEVEN: return "7";
+                case eRankType.RANK_SIX: return "6";
+                case eRankType.RANK_FIVE: return "5";
+                case eRankType.RANK_FOUR: return "4";
+                case eRankType.RANK_THREE: return "3";
+                case eRankType.RANK_TWO: return "2";
+                default: return "?";
+            };
         }
 
         public string ValueStr()

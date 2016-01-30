@@ -1,5 +1,5 @@
 <HoldemConfig>
-	<GameRules  littleBlind="10" bigBlind="20" maxNumRaisesPerBettingRound="4" startingStack="1000"/>
+	<GameRules  littleBlind="100" bigBlind="200" maxNumRaisesPerBettingRound="4" startingStack="100000" maxHands="1000" doubleBlindFrequency="-1"/>
 	<Players>
 		<Player dll="CallerBot.dll" startingStack="1500"/>
 		<Player dll="CallerBot.dll" />
