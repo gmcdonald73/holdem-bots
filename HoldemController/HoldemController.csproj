@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\Bots\</OutputPath>
+    <OutputPath>..\program\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -55,15 +55,15 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\HoldemPlayerContract\HoldemPlayerContract\HoldemPlayerContract.csproj">
-      <Project>{ad776b7f-645d-4432-9f10-4780cc39b5f2}</Project>
-      <Name>HoldemPlayerContract</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="HoldemConfig.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HoldemPlayerContract\HoldemPlayerContract.csproj">
+      <Project>{ad776b7f-645d-4432-9f10-4780cc39b5f2}</Project>
+      <Name>HoldemPlayerContract</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
