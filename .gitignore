@@ -216,3 +216,4 @@ pip-log.txt
 .mr.developer.cfg
 Bots/gamelog.txt
 Bots/playerinfo.txt
+Bots/HoldemConfig.xml
