@@ -7,8 +7,8 @@ namespace HoldemController
 
     public class Deck
     {
-        private Card[] cards = new Card[52];
-        private int topCard;
+        private readonly Card[] _cards = new Card[52];
+        private int _topCard;
 
         public Deck()
         {
@@ -16,12 +16,12 @@ namespace HoldemController
 
             for (i = 0; i < 52; i++)
             {
-                eRankType rank = (eRankType)(i % 13);
-                eSuitType suit = (eSuitType)(i / 13);
+                var rank = (ERankType)(i % 13);
+                var suit = (ESuitType)(i / 13);
 
-                Card card = new Card(rank, suit);
+                var card = new Card(rank, suit);
 
-                cards[i] = card;
+                _cards[i] = card;
             }
 
             Shuffle();
@@ -29,21 +29,21 @@ namespace HoldemController
 
         public void Shuffle()
         {
-            Card[] shuffledDeck = new Card[52];
-            List<Card> unshuffledList = new List<Card>();
-            int i,pos;
-            Random rnd = new Random();
+            var shuffledDeck = new Card[52];
+            var unshuffledList = new List<Card>();
+            int i;
+            var rnd = new Random();
 
-            topCard = 0;
+            _topCard = 0;
 
             for (i = 0; i < 52; i++)
             {
-                unshuffledList.Add(cards[i]);
+                unshuffledList.Add(_cards[i]);
             }
 
             for (i = 0; i < 52; i++)
             {
-                pos = rnd.Next(unshuffledList.Count);
+                var pos = rnd.Next(unshuffledList.Count);
                 shuffledDeck[i] = unshuffledList[pos];
                 unshuffledList.RemoveAt(pos);
             }
@@ -51,14 +51,14 @@ namespace HoldemController
             // Copy shuffled deck back to deck
             for (i = 0; i < 52; i++)
             {
-                cards[i] = shuffledDeck[i];
+                _cards[i] = shuffledDeck[i];
             }
         }
 
         public Card DealCard()
         {
-            Card card = cards[topCard];
-            topCard++;
+            var card = _cards[_topCard];
+            _topCard++;
             return card;
         }
     }

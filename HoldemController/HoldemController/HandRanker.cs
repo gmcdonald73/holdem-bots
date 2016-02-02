@@ -1,47 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
+﻿using System.Collections.Generic;
 using HoldemPlayerContract;
 
 namespace HoldemController
 {
-    class HandRankInfo
-    {
-        public Hand hand;
-        public List<int> Players;
-
-        public HandRankInfo(int playerId, Hand playerHand)
-        {
-            hand = playerHand;
-            Players = new List<int>();
-            Players.Add(playerId);
-        }
-
-        public void AddPlayer(int playerId)
-        {
-            if (!Players.Contains(playerId))
-            {
-                Players.Add(playerId);
-            }
-        }
-    }
-
-    class HandRanker
+    internal class HandRanker
     {
         public List<HandRankInfo> HandRanks = new List<HandRankInfo>();
 
         public void AddHand(int playerId, Hand playerHand)
         {
-            int i = 0;
-            bool bAdded = false;
+            var i = 0;
+            var bAdded = false;
 
-            while (i < HandRanks.Count() && !bAdded)
+            while (i < HandRanks.Count && !bAdded)
             {
-                Hand listHand = HandRanks[i].hand;
-                int compareResult = playerHand.compare(listHand);
+                var listHand = HandRanks[i].Hand;
+                var compareResult = playerHand.Compare(listHand);
 
                 if ( compareResult == 1)
                 {
@@ -71,26 +45,18 @@ namespace HoldemController
             Logger.Log("");
             Logger.Log("--- Hand Ranks ---");
 
-            foreach (HandRankInfo hri in HandRanks)
+            foreach (var hri in HandRanks)
             {
-                Hand hand = hri.hand;
-                string sLogMsg;
+                var hand = hri.Hand;
 
-                sLogMsg = hand.handRankStr() + " ";
+                var sLogMsg = hand.HandRankStr() + " ";
 
-                for (int i = 0; i < hand.numSubRanks(); i++)
+                for (var i = 0; i < hand.NumSubRanks(); i++)
                 {
-                    sLogMsg += hand.subRank(i).ToString() + " ";
+                    sLogMsg += hand.SubRank(i) + " ";
                 }
 
-                sLogMsg += "Players (";
-
-                foreach (int p in hri.Players)
-                {
-                    sLogMsg += p + ",";
-                }
-
-                sLogMsg += ")";
+                sLogMsg += "Players (" + string.Join(",", hri.Players) + ")";
                 Logger.Log(sLogMsg);
             }
 

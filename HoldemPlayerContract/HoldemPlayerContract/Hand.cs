@@ -1,53 +1,37 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HoldemPlayerContract
 {
-    public enum eHandType
-    {
-        HAND_RUNT,
-        HAND_PAIR,
-        HAND_TWO_PAIR,
-        HAND_THREES,
-        HAND_STRAIGHT,
-        HAND_FLUSH,
-        HAND_FULL_HOUSE,
-        HAND_FOURS,
-        HAND_STRAIGHT_FLUSH
-    };
-
     public class Hand
     {
-        private Card[] _cards;
-        private int[] _rankCount;
-        private int[] _suitCount;
+        private readonly Card[] _cards;
+        private readonly int[] _rankCount;
+        private readonly int[] _suitCount;
 
-        private eHandType _rank;
-        private eRankType[] _subRank;
+        private EHandType _rank;
+        private ERankType[] _subRank;
         private int _numSubRanks;
 
-        public eHandType handRank()
+        public EHandType HandRank()
         {
             return _rank;
         }
 
-        public int numSubRanks()
+        public int NumSubRanks()
         {
             return _numSubRanks;
         }
 
-        public eRankType subRank(int level)
+        public ERankType SubRank(int level)
         {
             return _subRank[level];
         }
 
 
-        public Hand(Card[] pCards) 
+        public Hand(IReadOnlyList<Card> pCards) 
         {
-            if (pCards.Count() != 5)
+            if (pCards.Count != 5)
             {
                 return;
             }
@@ -55,55 +39,53 @@ namespace HoldemPlayerContract
             _cards = new Card[5];
             _rankCount = new int[13];
             _suitCount = new int[4];
-            _subRank = new eRankType[5];
+            _subRank = new ERankType[5];
 
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++)
             {
                 _cards[i] = pCards[i];
             }
 
             _evaluate();
 
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < 5; i++)
             {
                 if (i >= _numSubRanks)
                 {
-                    _subRank[i] = eRankType.RANK_UNKNOWN;
+                    _subRank[i] = ERankType.RankUnknown;
                 }
             }
         }
 
-        public string handValueStr()
+        public string HandValueStr()
         {
             int i;
-            string strVal = "";
-            string temp;
+            var strVal = "";
 
             for (i = 0; i < 5; i++)
             {
-                temp = _cards[i].ValueStr() + " ";
-                strVal += temp;
+                strVal += _cards[i].ValueStr() + " ";
             }
 
             return strVal;
         }
 
-        public string handRankStr()
+        public string HandRankStr()
         {
             string sRankStr;
             switch (_rank)
             {
-                case eHandType.HAND_STRAIGHT_FLUSH: sRankStr = "Straight Flush"; break;
-                case eHandType.HAND_FOURS: sRankStr = "Four of a kind"; break;
-                case eHandType.HAND_FULL_HOUSE: sRankStr = "Full House"; break;
-                case eHandType.HAND_FLUSH: sRankStr = "Flush"; break;
-                case eHandType.HAND_STRAIGHT: sRankStr = "Straight"; break;
-                case eHandType.HAND_THREES: sRankStr = "Three of a kind"; break;
-                case eHandType.HAND_TWO_PAIR: sRankStr = "Two pair"; break;
-                case eHandType.HAND_PAIR: sRankStr = "Pair"; break;
-                case eHandType.HAND_RUNT: sRankStr = "Runt"; break;
+                case EHandType.HandStraightFlush: sRankStr = "Straight Flush"; break;
+                case EHandType.HandFours: sRankStr = "Four of a kind"; break;
+                case EHandType.HandFullHouse: sRankStr = "Full House"; break;
+                case EHandType.HandFlush: sRankStr = "Flush"; break;
+                case EHandType.HandStraight: sRankStr = "Straight"; break;
+                case EHandType.HandThrees: sRankStr = "Three of a kind"; break;
+                case EHandType.HandTwoPair: sRankStr = "Two pair"; break;
+                case EHandType.HandPair: sRankStr = "Pair"; break;
+                case EHandType.HandRunt: sRankStr = "Runt"; break;
                 default: sRankStr = "???"; break;
-            };
+            }
 
             /*
                         int i;
@@ -118,14 +100,14 @@ namespace HoldemPlayerContract
         // -1 = hand1 is better
         // 0  = hands are equal
         // 1  = hand2 is better
-        public static int compareHands(Hand pHand1, Hand pHand2)
+        public static int CompareHands(Hand pHand1, Hand pHand2)
         {
-            if (pHand1.handRank() > pHand2.handRank())
+            if (pHand1.HandRank() > pHand2.HandRank())
             {
                 return -1;
             }
 
-            if (pHand2.handRank() > pHand1.handRank())
+            if (pHand2.HandRank() > pHand1.HandRank())
             {
                 return 1;
             }
@@ -134,17 +116,17 @@ namespace HoldemPlayerContract
 
             //		assert(pHand1.numSubRanks() == pHand2.numSubRanks());
 
-            int numSubRanks = pHand1.numSubRanks();
+            var numSubRanks = pHand1.NumSubRanks();
             int currSubRank;
 
             for (currSubRank = 0; currSubRank < numSubRanks; currSubRank++)
             {
-                if (pHand1.subRank(currSubRank) > pHand2.subRank(currSubRank))
+                if (pHand1.SubRank(currSubRank) > pHand2.SubRank(currSubRank))
                 {
                     return -1;
                 }
 
-                if (pHand2.subRank(currSubRank) > pHand1.subRank(currSubRank))
+                if (pHand2.SubRank(currSubRank) > pHand1.SubRank(currSubRank))
                 {
                     return 1;
                 }
@@ -156,9 +138,9 @@ namespace HoldemPlayerContract
         // -1 = otherHand is better
         // 0  = hands are equal
         // 1  = this hand is better
-        public int compare(Hand otherHand)
+        public int Compare(Hand otherHand)
         {
-            return compareHands(otherHand, this);
+            return CompareHands(otherHand, this);
         }
 
 
@@ -166,11 +148,9 @@ namespace HoldemPlayerContract
         // determine the best poker hand that can be formed using any 5 of the 7 cards
         public static Hand FindPlayersBestHand(Card[] pocketCards, Card[] board)
         {
-            Card[] cards = new Card[7];
-            Card[] currHandCards = new Card[5];
-            int i, j, k, currCard;
-            Hand bestHand = new Hand(board);  // default to play board
-            Hand currHand;
+            var cards = new Card[7];
+            var currHandCards = new Card[5];
+            var bestHand = new Hand(board);  // default to play board
 
             // Put all cards togther
             cards[0] = pocketCards[0];
@@ -181,13 +161,14 @@ namespace HoldemPlayerContract
             cards[5] = board[3];
             cards[6] = board[4];
 
-            for (i = 0; i < 7; i++)
+            for (var i = 0; i < 7; i++)
             {
-                for (j = i + 1; j < 7; j++)
+                for (var j = i + 1; j < 7; j++)
                 {
                     // exclude cards at indices i and j, make poker hand
                     // with the other 5 cards
-                    currCard = 0;
+                    var currCard = 0;
+                    int k;
                     for (k = 0; k < 7; k++)
                     {
                         if ((k != i) && (k != j))
@@ -197,11 +178,11 @@ namespace HoldemPlayerContract
                         }
                     }
 
-                    currHand = new Hand(currHandCards);
+                    var currHand = new Hand(currHandCards);
 
                     // If this is better than current best rank (and sub ranks)
                     // then make this the new best hand
-                    if (Hand.compareHands(currHand, bestHand) == -1)
+                    if (CompareHands(currHand, bestHand) == -1)
                     {
                         bestHand = currHand;
                     }
@@ -224,62 +205,62 @@ namespace HoldemPlayerContract
             _calcSuitCount();
 
             // Is it a straight flush?
-            if (isStraightFlush(ref _numSubRanks, ref _subRank))
+            if (IsStraightFlush(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_STRAIGHT_FLUSH;
+                _rank = EHandType.HandStraightFlush;
                 return;
             }
 
             // fours?
-            if (isFours(ref _numSubRanks, ref _subRank))
+            if (IsFours(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_FOURS;
+                _rank = EHandType.HandFours;
                 return;
             }
 
             // full house?
-            if (isFullHouse(ref _numSubRanks, ref _subRank))
+            if (IsFullHouse(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_FULL_HOUSE;
+                _rank = EHandType.HandFullHouse;
                 return;
             }
 
             // flush?
-            if (isFlush(ref _numSubRanks, ref _subRank))
+            if (IsFlush(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_FLUSH;
+                _rank = EHandType.HandFlush;
                 return;
             }
 
             // straight?
-            if (isStraight(ref _numSubRanks, ref _subRank))
+            if (IsStraight(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_STRAIGHT;
+                _rank = EHandType.HandStraight;
                 return;
             }
 
             // threes?
-            if (isThrees(ref _numSubRanks, ref _subRank))
+            if (IsThrees(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_THREES;
+                _rank = EHandType.HandThrees;
                 return;
             }
 
             // two pair?
-            if (isTwoPair(ref _numSubRanks, ref _subRank))
+            if (IsTwoPair(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_TWO_PAIR;
+                _rank = EHandType.HandTwoPair;
                 return;
             }
 
             // one pair?
-            if (isPair(ref _numSubRanks, ref _subRank))
+            if (IsPair(ref _numSubRanks, ref _subRank))
             {
-                _rank = eHandType.HAND_PAIR;
+                _rank = EHandType.HandPair;
                 return;
             }
 
-            _rank = eHandType.HAND_RUNT;
+            _rank = EHandType.HandRunt;
             _numSubRanks = 5;
 
             // This works because the hand is already sorted in descending order
@@ -291,26 +272,19 @@ namespace HoldemPlayerContract
 
 
         private bool
-        isStraightFlush(ref int numSubRanks, ref eRankType[] subRank)
+        IsStraightFlush(ref int numSubRanks, ref ERankType[] subRank)
         {
             // These are required parameters, but can be ignored
-            int flushNumSubRanks = 0;
-            eRankType[] flushSubRank = new eRankType[5];
+            var flushNumSubRanks = 0;
+            var flushSubRank = new ERankType[5];
 
-            if (isStraight(ref numSubRanks, ref subRank) && isFlush(ref flushNumSubRanks, ref flushSubRank))
-            {
-                return true;
-            }
-
-            return false;
+            return IsStraight(ref numSubRanks, ref subRank) && IsFlush(ref flushNumSubRanks, ref flushSubRank);
         }
 
 
-        private bool
-        isFours(ref int numSubRanks, ref eRankType[] subRank)
+        private bool IsFours(ref int numSubRanks, ref ERankType[] subRank)
         {
             int currRank;
-            int currCard;
 
             numSubRanks = 2;
 
@@ -318,8 +292,9 @@ namespace HoldemPlayerContract
             {
                 if (_rankCount[currRank] == 4)
                 {
-                    subRank[0] = (eRankType)Enum.ToObject(typeof(eRankType), currRank);
+                    subRank[0] = (ERankType)Enum.ToObject(typeof(ERankType), currRank);
 
+                    int currCard;
                     for (currCard = 0; currCard < 5; currCard++)
                     {
                         if (_cards[currCard].Rank != subRank[0])
@@ -336,17 +311,17 @@ namespace HoldemPlayerContract
 
 
         private bool
-        isFullHouse(ref int numSubRanks, ref eRankType[] subRank)
+        IsFullHouse(ref int numSubRanks, ref ERankType[] subRank)
         {
-            int threesNumSubRanks = 0;
-            eRankType[] threesSubRank = new eRankType[5];
+            var threesNumSubRanks = 0;
+            var threesSubRank = new ERankType[5];
 
-            int pairNumSubRanks = 0;
-            eRankType[] pairSubRank = new eRankType[5];
+            var pairNumSubRanks = 0;
+            var pairSubRank = new ERankType[5];
 
 
-            if (isThrees(ref threesNumSubRanks, ref threesSubRank) &&
-                isPair(ref pairNumSubRanks, ref pairSubRank))
+            if (IsThrees(ref threesNumSubRanks, ref threesSubRank) &&
+                IsPair(ref pairNumSubRanks, ref pairSubRank))
             {
                 numSubRanks = 2;
                 subRank[0] = threesSubRank[0];
@@ -359,7 +334,7 @@ namespace HoldemPlayerContract
         }
 
 
-        private bool isFlush(ref int numSubRanks, ref eRankType[] subRank)
+        private bool IsFlush(ref int numSubRanks, ref ERankType[] subRank)
         {
             int i;
 
@@ -383,11 +358,11 @@ namespace HoldemPlayerContract
         }
 
 
-        private bool isStraight(ref int numSubRanks, ref eRankType[] subRank)
+        private bool IsStraight(ref int numSubRanks, ref ERankType[] subRank)
         {
             int i;
-            eRankType lowRank = eRankType.RANK_UNKNOWN;
-            eRankType highRank = eRankType.RANK_UNKNOWN;
+            var lowRank = ERankType.RankUnknown;
+            var highRank = ERankType.RankUnknown;
 
             numSubRanks = 1;
 
@@ -403,11 +378,11 @@ namespace HoldemPlayerContract
                 // Determine highest and lowest ranked cards in hand here
                 if (_rankCount[i] == 1)
                 {
-                    highRank = (eRankType)Enum.ToObject(typeof(eRankType), i);
+                    highRank = (ERankType)Enum.ToObject(typeof(ERankType), i);
 
-                    if (lowRank == eRankType.RANK_UNKNOWN)
+                    if (lowRank == ERankType.RankUnknown)
                     {
-                        lowRank = (eRankType)Enum.ToObject(typeof(eRankType), i);
+                        lowRank = (ERankType)Enum.ToObject(typeof(ERankType), i);
                     }
                 }
             }
@@ -416,18 +391,18 @@ namespace HoldemPlayerContract
 
             // If the highest and lowest rank cards are within a spread of 5 cards, 
             // and there are no pairs, then it must be straight
-            if ((highRank - lowRank) == 4)
+            if (highRank - lowRank == 4)
             {
                 return true;
             }
 
             // Check for Ace low straight here (special case as my code usually treats Ace as high)
-            if ((lowRank == eRankType.RANK_TWO) && (highRank == eRankType.RANK_ACE))
+            if ((lowRank == ERankType.RankTwo) && (highRank == ERankType.RankAce))
             {
                 // Got Ace and Two
 
                 // Check for any 6's -> K's. (If any then no straight)
-                for (i = (int)eRankType.RANK_SIX; i <= (int)eRankType.RANK_KING; i++)
+                for (i = (int)ERankType.RankSix; i <= (int)ERankType.RankKing; i++)
                 {
                     if (_rankCount[i] > 0)
                     {
@@ -436,7 +411,7 @@ namespace HoldemPlayerContract
                 }
 
                 // This is a 5 high straight
-                subRank[0] = eRankType.RANK_FIVE;
+                subRank[0] = ERankType.RankFive;
 
                 return true;
             }
@@ -445,11 +420,9 @@ namespace HoldemPlayerContract
         }
 
 
-        private bool isThrees(ref int numSubRanks, ref eRankType[] subRank)
+        private bool IsThrees(ref int numSubRanks, ref ERankType[] subRank)
         {
-            eRankType currRank;
-            int currCard;
-            int currSubRank;
+            ERankType currRank;
 
             numSubRanks = 3;
 
@@ -459,8 +432,9 @@ namespace HoldemPlayerContract
                 {
                     subRank[0] = currRank;
 
-                    currSubRank = 1;
+                    var currSubRank = 1;
 
+                    int currCard;
                     for (currCard = 0; currCard < 5; currCard++)
                     {
                         if (_cards[currCard].Rank != subRank[0])
@@ -477,13 +451,13 @@ namespace HoldemPlayerContract
         }
 
 
-        private bool isTwoPair(ref int numSubRanks, ref eRankType[] subRank)
+        private bool IsTwoPair(ref int numSubRanks, ref ERankType[] subRank)
         {
-            eRankType currRank;
-            eRankType highPairRank = eRankType.RANK_UNKNOWN;
-            eRankType lowPairRank = eRankType.RANK_UNKNOWN;
-            eRankType oddCardRank = eRankType.RANK_UNKNOWN;
-            int pairCount = 0;
+            ERankType currRank;
+            var highPairRank = ERankType.RankUnknown;
+            var lowPairRank = ERankType.RankUnknown;
+            var oddCardRank = ERankType.RankUnknown;
+            var pairCount = 0;
 
             numSubRanks = 3;
 
@@ -493,7 +467,7 @@ namespace HoldemPlayerContract
                 {
                     pairCount++;
 
-                    if (highPairRank != eRankType.RANK_UNKNOWN)
+                    if (highPairRank != ERankType.RankUnknown)
                     {
                         lowPairRank = highPairRank;
                     }
@@ -520,11 +494,9 @@ namespace HoldemPlayerContract
         }
 
 
-        private bool isPair(ref int numSubRanks, ref eRankType[] subRank)
+        private bool IsPair(ref int numSubRanks, ref ERankType[] subRank)
         {
-            eRankType currRank;
-            int currCard;
-            int currSubRank;
+            ERankType currRank;
 
             numSubRanks = 4;
 
@@ -534,8 +506,9 @@ namespace HoldemPlayerContract
                 {
                     subRank[0] = currRank;
 
-                    currSubRank = 1;
+                    var currSubRank = 1;
 
+                    int currCard;
                     for (currCard = 0; currCard < 5; currCard++)
                     {
                         if (_cards[currCard].Rank != subRank[0])
@@ -556,15 +529,14 @@ namespace HoldemPlayerContract
         // Uses an insertion sort
         private void _sortByRank()
         {
-            Card key;
-            Card[] sortedCards = new Card[5];
+            var sortedCards = new Card[5];
             int i, j;
 
             sortedCards[0] = _cards[0];
 
             for (j = 1; j < 5; j++)
             {
-                key = _cards[j];
+                var key = _cards[j];
 
                 i = j - 1;
 

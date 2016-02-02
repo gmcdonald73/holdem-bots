@@ -1,112 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HoldemController
 {
-    class Pot
-    {
-        private int _potSize;  // should match sum off all player contributions - unless we have distributed winnings
-        private int _maxContributions = 0;
-        private bool _IsCapped = false;
-
-        // need to record contributions per player
-        public Dictionary<int, int> PlayerContributions = new Dictionary<int, int>();
-
-        public int NumPlayersInvolved = 0;
-
-        public void EmptyPot()
-        {
-            _potSize = 0;
-            _maxContributions = 0;
-            PlayerContributions.Clear();
-            NumPlayersInvolved = 0;
-            _IsCapped = false;
-        }
-
-        public void CapPot()
-        {
-            _IsCapped = true;
-        }
-
-        public bool IsCapped()
-        {
-            return _IsCapped;
-        }
-
-        public void AddPlayersBet(int playerId, int amount)
-        {
-            int contributions = 0;
-
-            if (PlayerContributions.ContainsKey(playerId))
-            {
-                contributions = PlayerContributions[playerId];
-            }
-            else
-            {
-                NumPlayersInvolved++;
-            }
-
-            // Not an error - This could validly occur if splitting a pot and another player has not yet called the pot that is being split
-            //if (amount < (_maxContributions - contributions))
-            //{
-            //    throw new Exception("insufficient amount to call");
-            //}
-
-            contributions += amount;
-
-            if (contributions > _maxContributions)
-            {
-                if (_IsCapped)
-                {
-                    throw new Exception("contribution is too big, pot is capped");
-                }
-                else
-                {
-                    _maxContributions = contributions;
-                }
-            }
-
-            PlayerContributions[playerId] = contributions;
-            _potSize += amount;
-        }
-
-        public int Size()
-        {
-            return _potSize;
-        }
-        public int MaxContributions()
-        {
-            return _maxContributions;
-        }
-
-        public int AmountToCall(int playerId)
-        {
-            // max total contributions by any player - contributions for this player
-            int contributions = 0;
-
-            PlayerContributions.TryGetValue(playerId, out contributions);
-
-            return _maxContributions - contributions;
-        }
-
-        public List<int> ListPlayersInvolved()
-        {
-            List<int> playersInvolved = new List<int>();
-
-            // get list of all players that have contributed to the pot
-            foreach (KeyValuePair<int, int> pair in PlayerContributions)
-            {
-                playersInvolved.Add(pair.Key);
-            }
-
-            return playersInvolved;
-        }
-    }
-
-    class PotManager
+    internal class PotManager
     {
         public List<Pot> Pots = new List<Pot>();
 
@@ -114,7 +12,7 @@ namespace HoldemController
         {
             if (betAmount == 0) return;
 
-            if (Pots.Count() == 0)
+            if (Pots.Count == 0)
             {
                 Pots.Add(new Pot());
             }
@@ -122,16 +20,16 @@ namespace HoldemController
 
             // loop through pots from most players involved to least
             // call each pot if able (and raise the last if able). if allin and unable to call a pot then split this pot in two
-            int betAmountRemaining = betAmount;
+            var betAmountRemaining = betAmount;
 
-            int potNum = 0;
-            int numPots = Pots.Count();
+            var potNum = 0;
+            var numPots = Pots.Count;
 
             while (potNum < numPots && betAmountRemaining > 0)
             {
-                Pot p = Pots[potNum];
+                var p = Pots[potNum];
 
-                int amountToCall = p.AmountToCall(playerId);
+                var amountToCall = p.AmountToCall(playerId);
 
                 if (betAmountRemaining >= amountToCall)
                 {
@@ -166,7 +64,6 @@ namespace HoldemController
                     // split current pot and cap it, add players bet to new pot
                     SplitPotAndAddBet(p, playerId, betAmountRemaining);
                     betAmountRemaining = 0;
-
                 }
 
                 potNum++;
@@ -175,9 +72,8 @@ namespace HoldemController
             // all pots capped so need to create a new one to put remaining chips in
             if (betAmountRemaining > 0)
             {
-                Pot newPot = new Pot();
+                var newPot = new Pot();
                 newPot.AddPlayersBet(playerId, betAmountRemaining);
-                betAmountRemaining = 0;
 
                 if (isAllIn)
                 {
@@ -187,25 +83,24 @@ namespace HoldemController
 
                 Pots.Add(newPot);
             }
-
         }
 
         private void SplitPotAndAddBet(Pot p, int playerId, int betAmount)
         {
-            Pot newPot1 = new Pot();
-            Pot newPot2 = new Pot();
+            var newPot1 = new Pot();
+            var newPot2 = new Pot();
 
-            int pastContribution = 0;
+            var pastContribution = 0;
             if (p.PlayerContributions.ContainsKey(playerId))
             {
                 pastContribution = p.PlayerContributions[playerId];
             }
 
             // this is the players total contribution to this pot including the current bet. This is the amount we need to split on
-            int totalContribution = betAmount + pastContribution;
-            int capAmount = totalContribution;
+            var totalContribution = betAmount + pastContribution;
+            var capAmount = totalContribution;
 
-            foreach (KeyValuePair<int, int> pair in p.PlayerContributions)
+            foreach (var pair in p.PlayerContributions)
             {
                 if (pair.Key != playerId)
                 {
@@ -222,7 +117,6 @@ namespace HoldemController
             }
 
             newPot1.AddPlayersBet(playerId, totalContribution);
-            betAmount = 0;
 
             newPot1.CapPot();
 
@@ -235,13 +129,11 @@ namespace HoldemController
             Pots.Add(newPot1);
             Pots.Add(newPot2);
 
-            Pots.Sort(delegate(Pot x, Pot y)
-            {
-                if (x.NumPlayersInvolved > y.NumPlayersInvolved) return -1;
-                else if (x.NumPlayersInvolved < y.NumPlayersInvolved) return 1;
-                else return 0;
-            });
-
+            Pots.Sort((x, y) => x.NumPlayersInvolved <= y.NumPlayersInvolved
+                                    ? (x.NumPlayersInvolved < y.NumPlayersInvolved
+                                           ? 1
+                                           : 0)
+                                    : -1);
         }
 
         public void EmptyPot()
@@ -249,37 +141,21 @@ namespace HoldemController
             Pots.Clear();
         }
 
-
         public int Size()
         {
-            int size = 0;
-
-            foreach (Pot p in Pots)
-            {
-                size += p.Size();
-            }
-
-            return size;
+            return Pots.Sum(p => p.Size());
         }
 
         public int AmountToCall(int playerId)
         {
-            int amountToCall = 0;
-
-            foreach (Pot p in Pots)
-            {
-                amountToCall += p.AmountToCall(playerId);
-            }
-
-            return amountToCall;
+            return Pots.Sum(p => p.AmountToCall(playerId));
         }
 
         public List<int> GetPotsInvolvedIn(int playerNum)
         {
-            List <int> potsInvolvedIn = new List<int>();
-            int potNum = 0;
+            var potsInvolvedIn = new List<int>();
 
-            for(potNum=0; potNum<Pots.Count(); potNum++)
+            for(var potNum=0; potNum<Pots.Count; potNum++)
             {
                 if (Pots[potNum].ListPlayersInvolved().Contains(playerNum))
                 {
@@ -292,30 +168,13 @@ namespace HoldemController
 
         public int MaxContributions()
         {
-            int maxContributions = 0;
-
-            foreach (Pot p in Pots)
-            {
-                maxContributions += p.MaxContributions();
-            }
-
-            return maxContributions;
+            return Pots.Sum(p => p.MaxContributions());
         }
 
         public int PlayerContributions(int playerNum)
         {
-            int playerContributions = 0;
-
-            foreach (Pot p in Pots)
-            {
-                if (p.PlayerContributions.ContainsKey(playerNum))
-                {
-                    playerContributions += p.PlayerContributions[playerNum];
-                }
-            }
-
-            return playerContributions;
+            return Pots.Where(p => p.PlayerContributions.ContainsKey(playerNum))
+                       .Sum(p => p.PlayerContributions[playerNum]);
         }
-
     }
 }

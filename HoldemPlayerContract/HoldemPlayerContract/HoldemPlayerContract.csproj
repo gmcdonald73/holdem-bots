@@ -39,8 +39,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EActionType.cs" />
+    <Compile Include="EBoardCardType.cs" />
+    <Compile Include="EHandType.cs" />
+    <Compile Include="ERankType.cs" />
+    <Compile Include="EStage.cs" />
+    <Compile Include="ESuitType.cs" />
     <Compile Include="Hand.cs" />
-    <Compile Include="HoldemPlayerContract.cs" />
+    <Compile Include="Card.cs" />
+    <Compile Include="IHoldemPlayer.cs" />
+    <Compile Include="PlayerInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
