@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using HoldemPlayerContract;
+﻿using HoldemPlayerContract;
 
 namespace CallerBot
 {
@@ -42,19 +36,19 @@ namespace CallerBot
             // receive your hole cards for this hand
         }
 
-        public void SeeAction(eStage stage, int playerNum, eActionType action, int amount)
+        public void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
         {
             // this is called to inform you when any player (including yourself) makes an action (eg puts in blinds, checks, folds, calls, raises, or wins hand)
         }
 
-        public void GetAction(eStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out eActionType yourAction, out int amount)
+        public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
         {
             // This is the bit where you need to put the AI (mostly likely based on info you receive in other methods)
 
-            if (stage == eStage.STAGE_SHOWDOWN)
+            if (stage == EStage.StageShowdown)
             {
                 // if stage is the showdown then choose whether to show your hand or fold
-                yourAction = eActionType.ACTION_SHOW;
+                yourAction = EActionType.ActionShow;
                 amount = 0;
             }
             else
@@ -65,12 +59,12 @@ namespace CallerBot
                 // amount only matters if you are raising (if calling the controller will use the correct amount). 
                 // If raising, minRaise and maxRaise are the total amount required to put into the pot (i.e. it includes the call amount)
                 // Side pots are now implemented so you can go all in and call or raise even if you have less than minimum
-                yourAction = eActionType.ACTION_CALL;
+                yourAction = EActionType.ActionCall;
                 amount = callAmount;
             }
         }
 
-        public void SeeBoardCard(eBoardCardType cardType, Card boardCard)
+        public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
         {
             // this is called to inform you of the board cards (3 flop cards, turn and river)
         }

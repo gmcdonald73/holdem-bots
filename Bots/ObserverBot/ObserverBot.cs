@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.IO;
+﻿using System.IO;
 
 using HoldemPlayerContract;
 
@@ -62,18 +57,18 @@ namespace ObserverBot
         {
         }
 
-        public void SeeAction(eStage stage, int playerNum, eActionType action, int amount)
+        public void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
         {
             // this is called to inform you when any player (including yourself) makes an action (eg puts in blinds, checks, folds, calls, raises, or wins hand)
         }
 
-        public void GetAction(eStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out eActionType yourAction, out int amount)
+        public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
         {
             amount = 0;
-            yourAction = eActionType.ACTION_FOLD;
+            yourAction = EActionType.ActionFold;
         }
 
-        public void SeeBoardCard(eBoardCardType cardType, Card boardCard)
+        public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
         {
             // this is called to inform you of the board cards (3 flop cards, turn and river)
         }
