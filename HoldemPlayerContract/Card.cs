@@ -41,7 +41,7 @@
                 case ERankType.RankJack:
                     return "J";
                 case ERankType.RankTen:
-                    return "10";
+                    return "T";
                 case ERankType.RankNine:
                     return "9";
                 case ERankType.RankEight:
