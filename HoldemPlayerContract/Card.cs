@@ -1,6 +1,9 @@
-﻿namespace HoldemPlayerContract
+﻿using System;
+// using System.Collections.Generic;
+
+namespace HoldemPlayerContract
 {
-    public class Card
+    public class Card : IEquatable<Card>
     {
         public Card(ERankType pRank, ESuitType pSuit)
         {
@@ -11,6 +14,11 @@
         public readonly ERankType Rank;
 
         public string SuitStr()
+        {
+            return SuitToString(Suit);
+        }
+
+        public static string SuitToString(ESuitType Suit)
         {
             switch (Suit)
             {
@@ -27,8 +35,12 @@
             }
         }
 
-
         public string RankStr()
+        {
+            return RankToString(Rank);
+        }
+
+        public static string RankToString(ERankType Rank)
         {
             switch (Rank)
             {
@@ -67,6 +79,30 @@
         {
 	        return RankStr() + SuitStr();
         }
+
+        public override string ToString()
+        {
+            return ValueStr();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            Card objAsCard = obj as Card;
+            if (objAsCard == null) return false;
+            else return Equals(objAsCard);
+        }
+        public override int GetHashCode()
+        {
+            return ((int)Suit * 13) + (int)Rank;
+        }
+        public bool Equals(Card other)
+        {
+            if (other == null) return false;
+            return (this.Suit == other.Suit && this.Rank == other.Rank);
+        }
+        // Should also override == and != operators.
+
     }
 }
 

@@ -4,6 +4,7 @@ using HoldemPlayerContract;
 
 namespace ObserverBot
 {
+    // this bot is not an active player, but simply watches the game,  records stats and writes them to a log file -  playerinfo.txt
     public class ObserverBot : IHoldemPlayer
     {
         private class PlayerStats
@@ -14,8 +15,9 @@ namespace ObserverBot
             public int NumFlopsFolded;
             public int NumTurnsFolded;
             public int NumRiversFolded;
+            public int NumShowdowns;
             public int NumHandsWon;
-            public bool bWonsThisHand;
+            public bool bWonThisHand;
             public bool bIsObserver;
 
             public PlayerStats(int pPlayerNum, bool pbIsObserver)
@@ -27,8 +29,9 @@ namespace ObserverBot
                 NumFlopsFolded = 0;
                 NumTurnsFolded = 0;
                 NumRiversFolded = 0;
+                NumShowdowns = 0;
                 NumHandsWon = 0;
-                bWonsThisHand = false;
+                bWonThisHand = false;
             }
         }
 
@@ -100,7 +103,7 @@ namespace ObserverBot
                 if (p.IsAlive)
                 {
                     playerStats[p.PlayerNum].NumHandsPlayed++;
-                    playerStats[p.PlayerNum].bWonsThisHand = false;
+                    playerStats[p.PlayerNum].bWonThisHand = false;
                 }
             }
 
@@ -136,10 +139,10 @@ namespace ObserverBot
             else if (action == EActionType.ActionWin)
             {
                 // be careful not to double count here. This can be call multiple times for the same player for the same hand if they win more than one side pot
-                if(!playerStats[playerNum].bWonsThisHand)
+                if(!playerStats[playerNum].bWonThisHand)
                 {
                     playerStats[playerNum].NumHandsWon++;
-                    playerStats[playerNum].bWonsThisHand = true;
+                    playerStats[playerNum].bWonThisHand = true;
                 }
             }
 
@@ -181,19 +184,22 @@ namespace ObserverBot
 
             _tw.WriteLine("");
 
-            _tw.WriteLine("PlayerNum\tNumHandsPlayed\tNumPreFlopsFolded\tNumFlopsFolded\tNumTurnsFolded\tNumRiversFolded\tNumHandsWon");
+            _tw.WriteLine("PlayerNum\tNumHandsPlayed\tNumPreFlopsFolded\tNumFlopsFolded\tNumTurnsFolded\tNumRiversFolded\tNumShowdowns\tNumHandsWon");
 
             foreach (PlayerStats p in playerStats)
             {
                 if(!p.bIsObserver)
                 {
-                    _tw.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}",
+                    p.NumShowdowns = p.NumHandsPlayed - (p.NumPreFlopsFolded + p.NumFlopsFolded + p.NumTurnsFolded + p.NumRiversFolded);
+
+                    _tw.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}",
                             p.PlayerNum,
                             p.NumHandsPlayed,
                             p.NumPreFlopsFolded,
                             p.NumFlopsFolded,
                             p.NumTurnsFolded,
                             p.NumRiversFolded,
+                            p.NumShowdowns,
                             p.NumHandsWon
                         );
                 }

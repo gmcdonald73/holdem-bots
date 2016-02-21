@@ -31,9 +31,9 @@ namespace HoldemPlayerContract
 
         public Hand(IReadOnlyList<Card> pCards) 
         {
-            if (pCards.Count != 5)
+            if (pCards.Count < 5)
             {
-                return;
+                throw new Exception("not enough cards to form a hand");
             }
 
             _cards = new Card[5];
@@ -48,12 +48,9 @@ namespace HoldemPlayerContract
 
             _evaluate();
 
-            for (var i = 0; i < 5; i++)
+            for (var i = _numSubRanks; i < 5; i++)
             {
-                if (i >= _numSubRanks)
-                {
-                    _subRank[i] = ERankType.RankUnknown;
-                }
+                _subRank[i] = ERankType.RankUnknown;
             }
         }
 
@@ -146,32 +143,80 @@ namespace HoldemPlayerContract
 
         // Given two pocket cards and five board cards,
         // determine the best poker hand that can be formed using any 5 of the 7 cards
-        public static Hand FindPlayersBestHand(Card[] pocketCards, Card[] board)
+        //public static Hand FindPlayersBestHand(Card[] pocketCards, Card[] board)
+        //{
+        //    var cards = new Card[7];
+
+        //    // Put all cards together
+        //    cards[0] = pocketCards[0];
+        //    cards[1] = pocketCards[1];
+        //    cards[2] = board[0];
+        //    cards[3] = board[1];
+        //    cards[4] = board[2];
+        //    cards[5] = board[3];
+        //    cards[6] = board[4];
+
+        //    return FindPlayersBestHand(cards);
+        //}
+
+        public static Hand FindPlayersBestHand(IReadOnlyList<Card> pocketCards, IReadOnlyList<Card> board)
         {
-            var cards = new Card[7];
-            var currHandCards = new Card[5];
-            var bestHand = new Hand(board);  // default to play board
+//            var cards = new Card[7];
+            List<Card> cards = new List<Card>();
 
-            // Put all cards togther
-            cards[0] = pocketCards[0];
-            cards[1] = pocketCards[1];
-            cards[2] = board[0];
-            cards[3] = board[1];
-            cards[4] = board[2];
-            cards[5] = board[3];
-            cards[6] = board[4];
-
-            for (var i = 0; i < 7; i++)
+            if (pocketCards.Count != 2)
             {
-                for (var j = i + 1; j < 7; j++)
+                throw new Exception("must supply exactly 2 pocket cards");
+            }
+
+            if (board.Count < 3)
+            {
+                throw new Exception("not enough board cards");
+            }
+
+            if (board.Count > 5)
+            {
+                throw new Exception("too many board cards");
+            }
+
+            // Put all cards together
+            cards.Add(pocketCards[0]);
+            cards.Add(pocketCards[1]);
+
+            foreach(Card c in board)
+            {
+                cards.Add(c);
+            }
+
+            return FindPlayersBestHand(cards);
+        }
+
+        public static Hand FindPlayersBestHand(IReadOnlyList<Card> cards)
+        {
+            if (cards.Count < 5)
+            {
+                throw new Exception("not enough cards to find best hand");
+            }
+
+            if (cards.Count > 7)
+            {
+                throw new Exception("too many cards to find best hand");
+            }
+
+            var currHandCards = new Card[5];
+            var bestHand = new Hand(cards);   // if 5 cards just use them
+
+            if (cards.Count == 6)
+            {
+                for (var i = 0; i < 6; i++)
                 {
-                    // exclude cards at indices i and j, make poker hand
+                    // exclude cards at indices i, make poker hand
                     // with the other 5 cards
                     var currCard = 0;
                     int k;
-                    for (k = 0; k < 7; k++)
+                    for (k = 0; k < 6; k++)
                     {
-                        if ((k != i) && (k != j))
+                        if (k != i)
                         {
                             currHandCards[currCard] = cards[k];
                             currCard++;
@@ -185,6 +230,37 @@ namespace HoldemPlayerContract
                     if (CompareHands(currHand, bestHand) == -1)
                     {
                         bestHand = currHand;
+                    }
+                }
+            }
+            else if (cards.Count == 7)
+            {
+
+                for (var i = 0; i < 7; i++)
+                {
+                    for (var j = i + 1; j < 7; j++)
+                    {
+                        // exclude cards at indices i and j, make poker hand
+                        // with the other 5 cards
+                        var currCard = 0;
+                        int k;
+                        for (k = 0; k < 7; k++)
+                        {
+                            if ((k != i) && (k != j))
+                            {
+                                currHandCards[currCard] = cards[k];
+                                currCard++;
+                            }
+                        }
+
+                        var currHand = new Hand(currHandCards);
+
+                        // If this is better than current best rank (and sub ranks)
+                        // then make this the new best hand
+                        if (CompareHands(currHand, bestHand) == -1)
+                        {
+                            bestHand = currHand;
+                        }
                     }
                 }
             }

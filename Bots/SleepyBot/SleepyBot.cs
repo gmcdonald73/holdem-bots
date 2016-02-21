@@ -1,9 +1,16 @@
-﻿using HoldemPlayerContract;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace CallerBot
+using HoldemPlayerContract;
+
+namespace SleepyBot
 {
-    // this bots always calls. basic bot to test yours against and good starting template for building a better bot
-    public class CallerBot : IHoldemPlayer
+    // this bot will sleep for 5 seconds before calling. This is used to test that the controller can timeout bots if they are taking too long
+    // to respond, rather than having one bot blocking the game for an indefinite amount of time
+    public class SleepyBot : IHoldemPlayer
     {
         public void InitPlayer(int playerNum)
         {
@@ -15,7 +22,7 @@ namespace CallerBot
             // return the name of your player
             get
             {
-                return "CallerBot";
+                return "SleepyBot";
             }
         }
 
@@ -46,23 +53,10 @@ namespace CallerBot
         {
             // This is the bit where you need to put the AI (mostly likely based on info you receive in other methods)
 
-            if (stage == EStage.StageShowdown)
-            {
-                // if stage is the showdown then choose whether to show your hand or fold
-                yourAction = EActionType.ActionShow;
-                amount = 0;
-            }
-            else
-            {
-                // stage is preflop, flop, turn or river
-                // choose whether to fold, check, call or raise
-                // the controller will validate your action and try to honour your action if possible but may change it (e.g. it won't let you fold if checking is possible)
-                // amount only matters if you are raising (if calling the controller will use the correct amount). 
-                // If raising, minRaise and maxRaise are the total amount required to put into the pot (i.e. it includes the call amount)
-                // Side pots are now implemented so you can go all in and call or raise even if you have less than minimum
-                yourAction = EActionType.ActionCall;
-                amount = callAmount;
-            }
+            System.Threading.Thread.Sleep(5000);
+
+            yourAction = EActionType.ActionCall;
+            amount = callAmount;
         }
 
         public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
@@ -79,6 +73,5 @@ namespace CallerBot
         public void EndOfGame(int numPlayers, PlayerInfo[] players)
         {
         }
-
     }
 }
