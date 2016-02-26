@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using HoldemPlayerContract;
 
 namespace RandomBot
@@ -9,7 +10,7 @@ namespace RandomBot
         private int _playerNum;
         private Random _rnd;
 
-        public void InitPlayer(int playerNum)
+        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
             // This is called once at the start of the game. playerNum is your unique identifer for the game
             _playerNum = playerNum;
