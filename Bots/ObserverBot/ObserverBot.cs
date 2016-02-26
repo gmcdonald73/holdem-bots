@@ -1,5 +1,5 @@
 ﻿using System.IO;
-
+using System.Collections.Generic;
 using HoldemPlayerContract;
 
 namespace ObserverBot
@@ -41,7 +41,7 @@ namespace ObserverBot
         TextWriter _tw;
         private PlayerStats [] playerStats;
 
-        public void InitPlayer(int playerNum)
+        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
             // This is called once at the start of the game. playerNum is your unique identifer for the game
             _playerNum = playerNum;

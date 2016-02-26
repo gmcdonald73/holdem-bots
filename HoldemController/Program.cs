@@ -19,13 +19,14 @@ namespace HoldemController
         private int _bigBlindPlayerNum;
 
         // Game config - default values
-        private int _numPlayers = 4;
+        private int _numPlayers;
         private int _littleBlindSize = 100;
         private int _bigBlindSize = 200;
         private int _startingStack = 5000;
         private int _maxNumRaisesPerBettingRound = 4; 
-        private int maxHands = -1;
-        private int doubleBlindFrequency = -1;
+        private int _maxHands = -1;
+        private int _doubleBlindFrequency = -1;
+        private int _botTimeOutMilliSeconds = 5000;
 
         static void Main()
         {
@@ -153,7 +154,7 @@ namespace HoldemController
                 {
                     bDone = true;
                 }
-                else if (maxHands > 0 && handNum >= maxHands)
+                else if (_maxHands > 0 && handNum >= _maxHands)
                 {
                     bDone = true;
                 }
@@ -195,36 +196,38 @@ namespace HoldemController
             }
 
             // Get game rules
+            Dictionary<string, string> gameConfigSettings = new Dictionary<string, string>();
 
-            if (gameRules.Attribute("littleBlind") != null)
+            // add defaults to dictionary
+            gameConfigSettings.Add("littleBlind", _littleBlindSize.ToString());
+            gameConfigSettings.Add("bigBlind", _bigBlindSize.ToString());
+            gameConfigSettings.Add("startingStack", _startingStack.ToString());
+            gameConfigSettings.Add("maxNumRaisesPerBettingRound", _maxNumRaisesPerBettingRound.ToString());
+            gameConfigSettings.Add("maxHands", _maxHands.ToString());
+            gameConfigSettings.Add("doubleBlindFrequency", _doubleBlindFrequency.ToString());
+            gameConfigSettings.Add("botTimeOutMilliSeconds", _botTimeOutMilliSeconds.ToString());
+
+            // add or update values in dictionary from values in xml
+            foreach(XAttribute attr in gameRules.Attributes())
             {
-                _littleBlindSize = Convert.ToInt32(gameRules.Attribute("littleBlind").Value);
+                if (gameConfigSettings.ContainsKey(attr.Name.ToString()))
+                {
+                    gameConfigSettings[attr.Name.ToString()] = attr.Value;
+                }
+                else
+                {
+                    gameConfigSettings.Add(attr.Name.ToString(), attr.Value);
+                }
             }
 
-            if (gameRules.Attribute("bigBlind") != null)
-            {
-                _bigBlindSize = Convert.ToInt32(gameRules.Attribute("bigBlind").Value);
-            }
-
-            if (gameRules.Attribute("startingStack") != null)
-            {
-                _startingStack = Convert.ToInt32(gameRules.Attribute("startingStack").Value);
-            }
-
-            if (gameRules.Attribute("maxNumRaisesPerBettingRound") != null)
-            {
-                _maxNumRaisesPerBettingRound = Convert.ToInt32(gameRules.Attribute("maxNumRaisesPerBettingRound").Value);
-            }
-
-            if (gameRules.Attribute("maxHands") != null)
-            {
-                maxHands = Convert.ToInt32(gameRules.Attribute("maxHands").Value);
-            }
-
-            if (gameRules.Attribute("doubleBlindFrequency") != null)
-            {
-                doubleBlindFrequency = Convert.ToInt32(gameRules.Attribute("doubleBlindFrequency").Value);
-            }
+            // read values from dictionary
+            _littleBlindSize = Convert.ToInt32(gameConfigSettings["littleBlind"]);
+            _bigBlindSize = Convert.ToInt32(gameConfigSettings["bigBlind"]);
+            _startingStack = Convert.ToInt32(gameConfigSettings["startingStack"]);
+            _maxNumRaisesPerBettingRound = Convert.ToInt32(gameConfigSettings["maxNumRaisesPerBettingRound"]);
+            _maxHands = Convert.ToInt32(gameConfigSettings["maxHands"]);
+            _doubleBlindFrequency = Convert.ToInt32(gameConfigSettings["doubleBlindFrequency"]);
+            _botTimeOutMilliSeconds = Convert.ToInt32(gameConfigSettings["botTimeOutMilliSeconds"]);
 
             // Create players
             var xplayers = doc.Descendants("Player");
@@ -242,16 +245,29 @@ namespace HoldemController
 
             foreach (var player in xplayers)
             {
-                var playersStartingStack = player.Attribute("startingStack") != null
-                                               ? Convert.ToInt32(player.Attribute("startingStack").Value)
-                                               : _startingStack;
+                // copy game config settings to player config
+                Dictionary<string, string> playerConfigSettings = new Dictionary<string, string>(gameConfigSettings);
 
-                _players[i] = new ServerHoldemPlayer(i, playersStartingStack, player.Attribute("dll").Value);
+                // read player attributes, add to player config or override game settings
+                foreach (XAttribute attr in player.Attributes())
+                {
+                    if(playerConfigSettings.ContainsKey(attr.Name.ToString()))
+                    {
+                        playerConfigSettings[attr.Name.ToString()] = attr.Value;
+                    }
+                    else
+                    {
+                        playerConfigSettings.Add(attr.Name.ToString(), attr.Value);
+                    }
+                }
+
+                _players[i] = new ServerHoldemPlayer(i, playerConfigSettings);
 
                 if(_players[i].IsAlive)
                 {
                     numLivePlayers++;
                 }
+
                 i++;
             }
 
@@ -265,7 +281,7 @@ namespace HoldemController
         {
 
             // Double the blinds if required. Do this here because later on we may want to include this in info to players
-            if (doubleBlindFrequency > 0 && handNum % doubleBlindFrequency == 0)
+            if (_doubleBlindFrequency > 0 && handNum % _doubleBlindFrequency == 0)
             {
                 _littleBlindSize *= 2;
                 _bigBlindSize *= 2;

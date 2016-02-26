@@ -15,7 +15,7 @@ namespace ExceptionBot
     {
         private int zero = 0;
 
-        public void InitPlayer(int playerNum)
+        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
             // This is called once at the start of the game. playerNum is your unique identifer for the game
             int i = 1 / zero;

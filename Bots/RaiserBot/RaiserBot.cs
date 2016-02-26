@@ -11,7 +11,7 @@ namespace RaiserBot
     // this bot will always bet the minimum raise at every opportunity
     public class RaiserBot : IHoldemPlayer
     {
-        public void InitPlayer(int playerNum)
+        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
         }
 

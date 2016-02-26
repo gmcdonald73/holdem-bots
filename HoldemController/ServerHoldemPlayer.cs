@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 using HoldemPlayerContract;
 
@@ -17,10 +19,23 @@ namespace HoldemController
 
         private readonly Card[] _holeCards;
 
-        public ServerHoldemPlayer(int pPlayerNum, int pStackSize, string dllFile)
+        private string _sName = null;
+        private bool? _bIsObserver = null;
+
+        // for launching GetAction in separate thread
+        private EActionType _playersAction;
+        private int _playersBetAmount;
+        private int _botTimeOutMilliSeconds;
+        private Task _task;
+        private bool _bIsBotBusy = false; // while a task for the bot is running don't start another task. instead don't send it anymore messages and fold until it is not busy at the start of a hand
+
+        public ServerHoldemPlayer(int pPlayerNum, Dictionary<string, string> playerConfigSettings)
         {
+            string dllFile = playerConfigSettings["dll"];
             PlayerNum = pPlayerNum;
-            StackSize = pStackSize;
+            StackSize = Convert.ToInt32(playerConfigSettings["startingStack"]);
+            _botTimeOutMilliSeconds = Convert.ToInt32(playerConfigSettings["botTimeOutMilliSeconds"]);
+
             IsActive = true;
             IsAlive = true;
             _holeCards = new Card[2];
@@ -35,23 +50,52 @@ namespace HoldemController
                                                      && type.GetInterface(pluginType.FullName) != null))
             {
                 _player = (IHoldemPlayer) Activator.CreateInstance(type);
-                InitPlayer(pPlayerNum);
+                InitPlayer(pPlayerNum, playerConfigSettings);
                 break;
             }
         }
 
-        public void InitPlayer(int playerNum)
+        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunInitPlayer(playerNum, playerConfigSettings); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunInitPlayer(playerNum, playerConfigSettings);
+            }
+
             if (IsObserver)
             {
                 IsAlive = false;
                 IsActive = false;
                 StackSize = 0;
             }
+        }
 
+        private void RunInitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
+        {
             try
             {
-                _player.InitPlayer(playerNum);
+                _player.InitPlayer(playerNum, playerConfigSettings);
             }
             catch (Exception e)
             {
@@ -59,22 +103,58 @@ namespace HoldemController
             }
         }
 
+
+
         public string Name
         {
             get
             {
-                var sName = "????";
-
-                try
+                if(_sName == null)
                 {
-                    sName = _player.Name;
-                }
-                catch (Exception e)
-                {
-                    Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
+                    _sName = "????"; // default
+
+                    if (_botTimeOutMilliSeconds > 0)
+                    {
+                        if (!IsBotBusy())
+                        {
+                            _task = Task.Run(() => { RunGetName(); });
+
+                            // wait X amount of time for task to complete
+                            if (!_task.Wait(_botTimeOutMilliSeconds))
+                            {
+                                // Note that the task is still running in the background
+                                _bIsBotBusy = true;
+                                Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                            }
+                        }
+                        else
+                        {
+                            // bot is busy still running the previous task
+                            Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                        }
+                    }
+                    else
+                    {
+                        // timeout code disabled - just called method directly
+                        RunGetName();
+                    }
+
                 }
 
-                return sName;
+                return _sName;
+            }
+        }
+
+        private void RunGetName()
+        {
+            try
+            {
+                _sName = _player.Name;
+            }
+            catch (Exception e)
+            {
+                _sName = "????";
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
         }
 
@@ -82,18 +162,51 @@ namespace HoldemController
         {
             get
             {
-                var observer = false;
-
-                try
+                if (_bIsObserver == null)
                 {
-                    observer = _player.IsObserver;
-                }
-                catch (Exception e)
-                {
-                    Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
+                    _bIsObserver = true; // default
+
+                    if (_botTimeOutMilliSeconds > 0)
+                    {
+                        if (!IsBotBusy())
+                        {
+                            _task = Task.Run(() => { RunIsObserver(); });
+
+                            // wait X amount of time for task to complete
+                            if (!_task.Wait(_botTimeOutMilliSeconds))
+                            {
+                                // Note that the task is still running in the background
+                                _bIsBotBusy = true;
+                                Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                            }
+                        }
+                        else
+                        {
+                            // bot is busy still running the previous task
+                            Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                        }
+                    }
+                    else
+                    {
+                        // timeout code disabled - just called method directly
+                        RunIsObserver();
+                    }
                 }
 
-                return observer;
+                return (bool)_bIsObserver;
+            }
+        }
+
+        private void RunIsObserver()
+        {
+            try
+            {
+                _bIsObserver = _player.IsObserver;
+            }
+            catch (Exception e)
+            {
+                _bIsObserver = true;
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
         }
 
@@ -101,6 +214,38 @@ namespace HoldemController
         {
             IsActive = IsAlive;
 
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                // if bot is busy at the start of the hand then don't send any messages for the hand (so it doesn't get messages for half a hand)
+                _bIsBotBusy = (_task != null && !_task.IsCompleted);
+
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunInitHand(numPlayers, players); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunInitHand(numPlayers, players);
+            }
+        }
+
+        private void RunInitHand(int numPlayers, PlayerInfo[] players)
+        {
             try
             {
                 _player.InitHand(numPlayers, players);
@@ -114,6 +259,35 @@ namespace HoldemController
 
         public void ReceiveHoleCards(Card hole1, Card hole2)
         {
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunReceiveHoleCards(hole1, hole2); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunReceiveHoleCards(hole1, hole2);
+            }
+        }
+
+        private void RunReceiveHoleCards(Card hole1, Card hole2)
+        {
             _holeCards[0] = hole1;
             _holeCards[1] = hole2;
 
@@ -125,7 +299,6 @@ namespace HoldemController
             {
                 Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
-
         }
 
         public Card [] HoleCards()
@@ -133,7 +306,41 @@ namespace HoldemController
             return _holeCards;
         }
 
+        private bool IsBotBusy()
+        {
+            return _bIsBotBusy;
+        }
+
         public void SeeAction(EStage stage, int playerDoingAction, EActionType action, int amount)
+        {
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunSeeAction(stage, playerDoingAction, action, amount); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunSeeAction(stage, playerDoingAction, action, amount);
+            }
+        }
+
+        private void RunSeeAction(EStage stage, int playerDoingAction, EActionType action, int amount)
         {
             try
             {
@@ -143,28 +350,66 @@ namespace HoldemController
             {
                 Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
             }
-
         }
+
 
         public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType playersAction, out int playersBetAmount)
         {
-            // Default
-            playersAction = EActionType.ActionCall;
-            playersBetAmount = callAmount;
+            // Default to fold if exception or timeout
+            playersAction = EActionType.ActionFold;
+            playersBetAmount = 0;
 
-            try
+            if (_botTimeOutMilliSeconds > 0)
             {
-                _player.GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, out playersAction, out playersBetAmount);
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunGetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize);});
+
+                    // wait X amount of time for task to complete
+                    // if method has not returned in time then use default action
+                    if (_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        playersAction = _playersAction;
+                        playersBetAmount = _playersBetAmount;
+                    }
+                    else
+                    {
+                        // Note that the task is still running in the background
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
             }
-            catch (Exception e)
+            else
             {
-                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
+                // timeout code disabled - just called method directly
+                RunGetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize);
+                playersAction = _playersAction;
+                playersBetAmount = _playersBetAmount;
             }
 
             ValidateAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, ref playersAction, ref playersBetAmount);
         }
 
-        public void ValidateAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, ref EActionType playersAction, ref int playersBetAmount)
+        private void RunGetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize)
+        {
+            try
+            {
+                // call player.GetAction - can't put out params in anonymous method above so doing it this way
+                _player.GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, out _playersAction, out _playersBetAmount);
+            }
+            catch (Exception e)
+            {
+                Logger.Log(string.Format("EXCEPTION: {0} Player {1} : {2}", MethodBase.GetCurrentMethod().Name, PlayerNum, e.Message));
+            }
+        }
+
+
+        private void ValidateAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, ref EActionType playersAction, ref int playersBetAmount)
         {
             // *** Fix up action
             if(stage == EStage.StageShowdown)
@@ -276,6 +521,35 @@ namespace HoldemController
 
         public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
         {
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunSeeBoardCard(cardType, boardCard); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunSeeBoardCard(cardType, boardCard);
+            }
+        }
+         
+        private void RunSeeBoardCard(EBoardCardType cardType, Card boardCard)
+        {
             try
             {
                 _player.SeeBoardCard(cardType, boardCard);
@@ -288,6 +562,36 @@ namespace HoldemController
 
         public void SeePlayerHand(int playerShowingHand, Card hole1, Card hole2, Hand bestHand)
         {
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunSeePlayerHand(playerShowingHand, hole1, hole2, bestHand); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunSeePlayerHand(playerShowingHand, hole1, hole2, bestHand);
+            }
+        }
+
+
+        private void RunSeePlayerHand(int playerShowingHand, Card hole1, Card hole2, Hand bestHand)
+        {
             try
             {
                 _player.SeePlayerHand(playerShowingHand, hole1, hole2, bestHand);
@@ -299,6 +603,35 @@ namespace HoldemController
         }
 
         public void EndOfGame(int numPlayers, PlayerInfo[] players)
+        {
+            if (_botTimeOutMilliSeconds > 0)
+            {
+                if (!IsBotBusy())
+                {
+                    _task = Task.Run(() => { RunEndOfGame(numPlayers, players); });
+
+                    // wait X amount of time for task to complete
+                    if (!_task.Wait(_botTimeOutMilliSeconds))
+                    {
+                        // Note that the task is still running in the background
+                        _bIsBotBusy = true;
+                        Logger.Log("TIMEOUT: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                    }
+                }
+                else
+                {
+                    // bot is busy still running the previous task
+                    Logger.Log("BOT BUSY: {0} Player {1}", MethodBase.GetCurrentMethod().Name, PlayerNum);
+                }
+            }
+            else
+            {
+                // timeout code disabled - just called method directly
+                RunEndOfGame(numPlayers, players);
+            }
+        }
+
+        private void RunEndOfGame(int numPlayers, PlayerInfo[] players)
         {
             try
             {

@@ -12,7 +12,7 @@ namespace AllInBot
     // This is especially useful when testing side pots are working correctly. i.e. use multiple allin bots with different starting stack sizes
     public class AllInBot : IHoldemPlayer
     {
-        public void InitPlayer(int playerNum)
+        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
         }
 
