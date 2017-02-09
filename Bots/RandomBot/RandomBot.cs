@@ -5,7 +5,7 @@ using HoldemPlayerContract;
 namespace RandomBot
 {
     // this bot will randomly choose between fold, call or minimum raise.
-    public class RandomBot : IHoldemPlayer
+    public class RandomBot : MarshalByRefObject, IHoldemPlayer
     {
         private int _playerNum;
         private Random _rnd;

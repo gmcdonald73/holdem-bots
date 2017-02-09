@@ -11,7 +11,7 @@ namespace ExceptionBot
     // this bot always throws a divide by zero exception when any method is called.
     // this is used to test the exception handling in the controller and make sure that if a bot throws an exception it will
     // not crash the game
-    public class ExceptionBot : IHoldemPlayer
+    public class ExceptionBot : MarshalByRefObject, IHoldemPlayer
     {
         private int zero = 0;
 

@@ -1,11 +1,12 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using HoldemPlayerContract;
 
 namespace ObserverBot
 {
     // this bot is not an active player, but simply watches the game,  records stats and writes them to a log file -  playerinfo.txt
-    public class ObserverBot : IHoldemPlayer
+    public class ObserverBot : MarshalByRefObject, IHoldemPlayer
     {
         private class PlayerStats
         {

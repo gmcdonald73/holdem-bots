@@ -1,5 +1,9 @@
+
+using System;
+
 namespace HoldemPlayerContract
 {
+    [Serializable]
     public class PlayerInfo
     {
         public PlayerInfo(int pPlayerNum, string pName, bool pIsAlive, int pStackSize, bool pIsDealer, bool pIsObserver)

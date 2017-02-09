@@ -3,6 +3,7 @@
 
 namespace HoldemPlayerContract
 {
+    [Serializable]
     public class Card : IEquatable<Card>
     {
         public Card(ERankType pRank, ESuitType pSuit)

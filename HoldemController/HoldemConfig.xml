@@ -1,10 +1,10 @@
 <HoldemConfig>
-  <GameRules littleBlind="100" bigBlind="200" maxNumRaisesPerBettingRound="4" startingStack="100000" maxHands="1000" doubleBlindFrequency="-1"/>
+  <GameRules littleBlind="100" bigBlind="200" maxNumRaisesPerBettingRound="4" startingStack="50000" maxHands="100" doubleBlindFrequency="20" botTimeOutMilliSeconds="0"/>
   <Players>
-		<Player dll="CallerBot.dll" startingStack="1500"/>
 		<Player dll="CallerBot.dll" />
-		<Player dll="CallerBot.dll" startingStack="2000"/>
-		<Player dll="CallerBot.dll" startingStack="2900"/>
-		<Player dll="ObserverBot.dll"/>
-	</Players>
+    <Player dll="RaiserBot.dll" />
+    <Player dll="RandomBot.dll" />
+    <Player dll="CallerBot.dll" />
+    <Player dll="ObserverBot.dll" />
+  </Players>
 </HoldemConfig>

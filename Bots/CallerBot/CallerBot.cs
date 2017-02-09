@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿
+using System;
+using System.IO;
+using System.Collections.Generic;
 using HoldemPlayerContract;
 
 namespace CallerBot
 {
     // this bots always calls. basic bot to test yours against and good starting template for building a better bot
-    public class CallerBot : IHoldemPlayer
+    public class CallerBot : MarshalByRefObject, IHoldemPlayer
     {
         public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {

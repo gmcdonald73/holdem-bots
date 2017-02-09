@@ -9,7 +9,7 @@ using HoldemPlayerContract;
 namespace RaiserBot
 {
     // this bot will always bet the minimum raise at every opportunity
-    public class RaiserBot : IHoldemPlayer
+    public class RaiserBot : MarshalByRefObject, IHoldemPlayer
     {
         public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {

@@ -10,7 +10,7 @@ namespace AllInBot
 {
     // this bot always goes allin at every opportunity.
     // This is especially useful when testing side pots are working correctly. i.e. use multiple allin bots with different starting stack sizes
-    public class AllInBot : IHoldemPlayer
+    public class AllInBot : MarshalByRefObject, IHoldemPlayer
     {
         public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {

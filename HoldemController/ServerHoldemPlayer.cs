@@ -4,6 +4,12 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
+using System.IO;
+using System.Security;
+using System.Security.Policy;
+using System.Security.Permissions;
+using System.Runtime.Remoting;
+
 using HoldemPlayerContract;
 
 namespace HoldemController
@@ -28,10 +34,12 @@ namespace HoldemController
         private int _botTimeOutMilliSeconds;
         private Task _task;
         private bool _bIsBotBusy = false; // while a task for the bot is running don't start another task. instead don't send it anymore messages and fold until it is not busy at the start of a hand
+        private AppDomain _newDomain;
 
         public ServerHoldemPlayer(int pPlayerNum, Dictionary<string, string> playerConfigSettings)
         {
-            string dllFile = playerConfigSettings["dll"];
+            string botDir = "bots\\";
+            string dllFile = botDir + playerConfigSettings["dll"];
             PlayerNum = pPlayerNum;
             StackSize = Convert.ToInt32(playerConfigSettings["startingStack"]);
             _botTimeOutMilliSeconds = Convert.ToInt32(playerConfigSettings["botTimeOutMilliSeconds"]);
@@ -43,16 +51,50 @@ namespace HoldemController
             var an = AssemblyName.GetAssemblyName(dllFile);
             var assembly = Assembly.Load(an);
 
-            var pluginType = typeof(IHoldemPlayer);
+            var interfaceType = typeof(IHoldemPlayer);
             var types = assembly.GetTypes();
+            Type botType = null;
+
             foreach (var type in types.Where(type => !type.IsInterface
-                                                     && !type.IsAbstract
-                                                     && type.GetInterface(pluginType.FullName) != null))
+                                                        && !type.IsAbstract
+                                                        && type.GetInterface(interfaceType.FullName) != null))
             {
-                _player = (IHoldemPlayer) Activator.CreateInstance(type);
-                InitPlayer(pPlayerNum, playerConfigSettings);
+                botType = type;
                 break;
             }
+
+            if(botType == null)
+            {
+                throw new Exception(String.Format("A class that implements the IHoldemPlayer interface was not found in {0}.", dllFile));
+            }
+
+            if(dllFile == "bots\\ObserverBot.dll")
+            {
+                // If bots is trusted then run inside the current app domain
+                // !!! need a better way to identify trusted bots !!! use signing?
+                _player = (IHoldemPlayer) Activator.CreateInstance(botType);
+            }
+            else
+            {
+                // Untrusted bot - create a new sandbox to run it in with limited permissions
+                //Setting the AppDomainSetup. It is very important to set the ApplicationBase to a folder 
+                //other than the one in which the sandboxer resides.
+                AppDomainSetup adSetup = new AppDomainSetup();
+                adSetup.ApplicationBase = Path.GetFullPath(botDir);
+
+                //Setting the permissions for the AppDomain. We give the permission to execute and to 
+                //read/discover the location where the untrusted code is loaded.
+                PermissionSet permSet = new PermissionSet(PermissionState.None);
+                permSet.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
+
+                //Now we have everything we need to create the AppDomain, so let's create it.
+                _newDomain = AppDomain.CreateDomain("SandBox" + pPlayerNum, null, adSetup, permSet); 
+
+                // Now create an instance of the bot class inside the new appdomain
+                _player = (IHoldemPlayer)_newDomain.CreateInstanceAndUnwrap(an.FullName, botType.FullName);
+            }    
+
+            InitPlayer(pPlayerNum, playerConfigSettings);
         }
 
         public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
@@ -628,6 +670,12 @@ namespace HoldemController
             {
                 // timeout code disabled - just called method directly
                 RunEndOfGame(numPlayers, players);
+            }
+
+            // !!! should I be doing this here?
+            if(_newDomain != null)
+            {
+                AppDomain.Unload(_newDomain);
             }
         }
 

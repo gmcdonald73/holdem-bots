@@ -10,7 +10,7 @@ namespace SleepyBot
 {
     // this bot will sleep for X seconds before calling. This is used to test that the controller can timeout bots if they are taking too long
     // to respond, rather than having one bot blocking the game for an indefinite amount of time
-    public class SleepyBot : IHoldemPlayer
+    public class SleepyBot : MarshalByRefObject, IHoldemPlayer
     {
         private int _sleepMilliSeconds = 5000;
 

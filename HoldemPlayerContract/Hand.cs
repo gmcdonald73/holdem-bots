@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace HoldemPlayerContract
 {
+    [Serializable]
     public class Hand
     {
         private readonly Card[] _cards;
