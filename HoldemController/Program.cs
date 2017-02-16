@@ -23,10 +23,12 @@ namespace HoldemController
         private int _littleBlindSize = 100;
         private int _bigBlindSize = 200;
         private int _startingStack = 5000;
-        private int _maxNumRaisesPerBettingRound = 4; 
+        private int _maxNumRaisesPerBettingRound = -1; 
         private int _maxHands = -1;
         private int _doubleBlindFrequency = -1;
         private int _botTimeOutMilliSeconds = 5000;
+        private bool _bRandomDealer = true;
+        private bool _bRandomSeating = true;
 
         static void Main()
         {
@@ -53,9 +55,23 @@ namespace HoldemController
 
             var bDone = false;
             var handNum = 0;
+            var rnd = new Random();
 
             _totalMoneyInGame = _players.Sum(p => p.StackSize);
+
             _dealerPlayerNum = 0;
+
+            if(_bRandomDealer)
+            {
+                int dealerIncr = rnd.Next(GetNumActivePlayers());
+
+                while(dealerIncr>0)
+                {
+                    _dealerPlayerNum = GetNextActivePlayer(_dealerPlayerNum);
+                    dealerIncr--;
+                }
+            }
+
             _littleBlindPlayerNum = GetNextActivePlayer(_dealerPlayerNum);
             _bigBlindPlayerNum = GetNextActivePlayer(_littleBlindPlayerNum);
 
@@ -206,6 +222,8 @@ namespace HoldemController
             gameConfigSettings.Add("maxHands", _maxHands.ToString());
             gameConfigSettings.Add("doubleBlindFrequency", _doubleBlindFrequency.ToString());
             gameConfigSettings.Add("botTimeOutMilliSeconds", _botTimeOutMilliSeconds.ToString());
+            gameConfigSettings.Add("randomDealer", _bRandomDealer.ToString());
+            gameConfigSettings.Add("randomSeating", _bRandomSeating.ToString());
 
             // add or update values in dictionary from values in xml
             foreach(XAttribute attr in gameRules.Attributes())
@@ -228,6 +246,8 @@ namespace HoldemController
             _maxHands = Convert.ToInt32(gameConfigSettings["maxHands"]);
             _doubleBlindFrequency = Convert.ToInt32(gameConfigSettings["doubleBlindFrequency"]);
             _botTimeOutMilliSeconds = Convert.ToInt32(gameConfigSettings["botTimeOutMilliSeconds"]);
+            _bRandomDealer = Convert.ToBoolean(gameConfigSettings["randomDealer"]);
+            _bRandomSeating = Convert.ToBoolean(gameConfigSettings["randomSeating"]);
 
             // Create players
             var xplayers = doc.Descendants("Player");
@@ -240,8 +260,17 @@ namespace HoldemController
             {
                 throw new Exception("No Player elements found in HoldemConfig.xml");
             }
+
             _players = new ServerHoldemPlayer[_numPlayers];
 
+            var rnd = new Random();
+            List<int> unusedSlots = new List<int>();
+            int playerNum = 0;
+
+            for(i=0; i< _numPlayers; i++)
+            {
+                unusedSlots.Add(i);
+            }
 
             foreach (var player in xplayers)
             {
@@ -261,14 +290,24 @@ namespace HoldemController
                     }
                 }
 
-                _players[i] = new ServerHoldemPlayer(i, playerConfigSettings);
+                if(_bRandomSeating)
+                {
+                    int pos = rnd.Next(unusedSlots.Count);
+                    playerNum = unusedSlots[pos];
+                    unusedSlots.RemoveAt(pos);
+                }
 
-                if(_players[i].IsAlive)
+                _players[playerNum] = new ServerHoldemPlayer(playerNum, playerConfigSettings);
+
+                if(_players[playerNum].IsAlive)
                 {
                     numLivePlayers++;
                 }
 
-                i++;
+                if(!_bRandomSeating)
+                {
+                    playerNum++;
+                }
             }
 
             if(numLivePlayers < 2 || numLivePlayers > 23)
@@ -424,7 +463,7 @@ namespace HoldemController
         private void DoBettingRound(EStage stage, out int lastToAct)
         {
             var bDone = false;
-            var raisesRemaining = _maxNumRaisesPerBettingRound;
+            var raisesRemaining = _maxNumRaisesPerBettingRound < 0 ? 999 : _maxNumRaisesPerBettingRound;
             int firstBettorPlayerNum;
 
             // calc call /raise amounts req
@@ -476,7 +515,10 @@ namespace HoldemController
 						{
                             // if raise then update lastToAct to the preceding active player
                             lastToAct = GetPrevActivePlayer(currBettor);
-                            raisesRemaining--;
+                            if(_maxNumRaisesPerBettingRound > 0)
+                            {
+                                raisesRemaining--;
+                            }
 
                             // if this raise is less than the minimum (because all in) then we shouldn't count it as a proper raise and shouldn't allow the original raiser to reraise
                             if (playersBetAmount - callAmount > lastFullPureRaise)

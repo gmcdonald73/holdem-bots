@@ -11,8 +11,15 @@ namespace RaiserBot
     // this bot will always bet the minimum raise at every opportunity
     public class RaiserBot : MarshalByRefObject, IHoldemPlayer
     {
+        private int _numRaisesThisStage;
+        private int _maxNumRaisesPerBettingRound = -1;
+
         public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
+            if (playerConfigSettings.ContainsKey("maxNumRaisesPerBettingRound"))
+            {
+                _maxNumRaisesPerBettingRound = Convert.ToInt32(playerConfigSettings["maxNumRaisesPerBettingRound"]);
+            }
         }
 
         public string Name
@@ -33,6 +40,7 @@ namespace RaiserBot
 
         public void InitHand(int numPlayers, PlayerInfo[] players)
         {
+            _numRaisesThisStage = 0;
         }
 
         public void ReceiveHoleCards(Card hole1, Card hole2)
@@ -45,13 +53,23 @@ namespace RaiserBot
 
         public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
         {
-            yourAction = EActionType.ActionRaise;
-            amount = minRaise;
+            if((_maxNumRaisesPerBettingRound == -1) || (_numRaisesThisStage < _maxNumRaisesPerBettingRound))
+            {
+                yourAction = EActionType.ActionRaise;
+                amount = minRaise;
+                _numRaisesThisStage++;
+            }
+            else
+            {
+                yourAction = EActionType.ActionCall;
+                amount = callAmount;
+            }
         }
 
 
         public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
         {
+            _numRaisesThisStage = 0;
         }
 
         public void SeePlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
