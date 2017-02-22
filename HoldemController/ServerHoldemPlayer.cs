@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 using System.IO;
 using System.Security;
@@ -35,6 +36,13 @@ namespace HoldemController
         private Task _task;
         private bool _bIsBotBusy = false; // while a task for the bot is running don't start another task. instead don't send it anymore messages and fold until it is not busy at the start of a hand
         private AppDomain _newDomain;
+        private TimeSpan _lastMethodElapsedTime;
+        private int _handNum = 0;
+
+        public long LastMethodNumTicks()
+        {
+            return _lastMethodElapsedTime.Ticks;
+        }
 
         public ServerHoldemPlayer(int pPlayerNum, Dictionary<string, string> playerConfigSettings)
         {
@@ -125,6 +133,8 @@ namespace HoldemController
                 RunInitPlayer(playerNum, playerConfigSettings);
             }
 
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+
             if (IsObserver)
             {
                 IsAlive = false;
@@ -137,7 +147,11 @@ namespace HoldemController
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.InitPlayer(playerNum, playerConfigSettings);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -181,6 +195,8 @@ namespace HoldemController
                         RunGetName();
                     }
 
+                    TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, _sName));
+
                 }
 
                 return _sName;
@@ -191,7 +207,11 @@ namespace HoldemController
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _sName = _player.Name;
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -233,6 +253,9 @@ namespace HoldemController
                         // timeout code disabled - just called method directly
                         RunIsObserver();
                     }
+
+                    TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, _bIsObserver));
+
                 }
 
                 return (bool)_bIsObserver;
@@ -243,7 +266,11 @@ namespace HoldemController
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _bIsObserver = _player.IsObserver;
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -254,6 +281,7 @@ namespace HoldemController
 
         public void InitHand(int numPlayers, PlayerInfo[] players)
         {
+            _handNum++;
             IsActive = IsAlive;
 
             if (_botTimeOutMilliSeconds > 0)
@@ -284,13 +312,20 @@ namespace HoldemController
                 // timeout code disabled - just called method directly
                 RunInitHand(numPlayers, players);
             }
+
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+
         }
 
         private void RunInitHand(int numPlayers, PlayerInfo[] players)
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.InitHand(numPlayers, players);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -326,6 +361,9 @@ namespace HoldemController
                 // timeout code disabled - just called method directly
                 RunReceiveHoleCards(hole1, hole2);
             }
+
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, hole1, hole2));
+
         }
 
         private void RunReceiveHoleCards(Card hole1, Card hole2)
@@ -335,7 +373,11 @@ namespace HoldemController
 
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.ReceiveHoleCards(hole1, hole2);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -380,13 +422,20 @@ namespace HoldemController
                 // timeout code disabled - just called method directly
                 RunSeeAction(stage, playerDoingAction, action, amount);
             }
+
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}, {7}", _handNum, stage, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, playerDoingAction, action, amount));
+
         }
 
         private void RunSeeAction(EStage stage, int playerDoingAction, EActionType action, int amount)
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.SeeAction(stage, playerDoingAction, action, amount);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -435,14 +484,21 @@ namespace HoldemController
             }
 
             ValidateAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, ref playersAction, ref playersBetAmount);
+
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}", _handNum, stage, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, playersAction, playersBetAmount));
+
         }
 
         private void RunGetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize)
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 // call player.GetAction - can't put out params in anonymous method above so doing it this way
                 _player.GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, out _playersAction, out _playersBetAmount);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -588,13 +644,30 @@ namespace HoldemController
                 // timeout code disabled - just called method directly
                 RunSeeBoardCard(cardType, boardCard);
             }
+
+            EStage stage = EStage.StageFlop;
+            if(cardType == EBoardCardType.BoardRiver)
+            {
+                stage = EStage.StageRiver;
+            }
+            else if(cardType == EBoardCardType.BoardTurn)
+            {
+                stage = EStage.StageTurn;
+            }
+            
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}", _handNum, stage, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, cardType, boardCard));
+
         }
          
         private void RunSeeBoardCard(EBoardCardType cardType, Card boardCard)
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.SeeBoardCard(cardType, boardCard);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -629,6 +702,9 @@ namespace HoldemController
                 // timeout code disabled - just called method directly
                 RunSeePlayerHand(playerShowingHand, hole1, hole2, bestHand);
             }
+
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}, {7}", _handNum, EStage.StageShowdown, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, playerShowingHand, hole1, hole2));
+
         }
 
 
@@ -636,7 +712,11 @@ namespace HoldemController
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.SeePlayerHand(playerShowingHand, hole1, hole2, bestHand);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {
@@ -672,6 +752,8 @@ namespace HoldemController
                 RunEndOfGame(numPlayers, players);
             }
 
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StageShowdown, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+
             // !!! should I be doing this here?
             if(_newDomain != null)
             {
@@ -683,7 +765,11 @@ namespace HoldemController
         {
             try
             {
+                Stopwatch stopWatch = new Stopwatch();
+                stopWatch.Start();
                 _player.EndOfGame(numPlayers, players);
+                stopWatch.Stop();
+                _lastMethodElapsedTime = stopWatch.Elapsed;
             }
             catch (Exception e)
             {

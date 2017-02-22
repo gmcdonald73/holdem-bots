@@ -12,13 +12,13 @@ namespace RaiserBot
     public class RaiserBot : MarshalByRefObject, IHoldemPlayer
     {
         private int _numRaisesThisStage;
-        private int _maxNumRaisesPerBettingRound = -1;
+        private int _maxRaisesPerStage = -1;
 
         public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
         {
-            if (playerConfigSettings.ContainsKey("maxNumRaisesPerBettingRound"))
+            if (playerConfigSettings.ContainsKey("maxRaisesPerStage"))
             {
-                _maxNumRaisesPerBettingRound = Convert.ToInt32(playerConfigSettings["maxNumRaisesPerBettingRound"]);
+                _maxRaisesPerStage = Convert.ToInt32(playerConfigSettings["maxRaisesPerStage"]);
             }
         }
 
@@ -53,7 +53,7 @@ namespace RaiserBot
 
         public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
         {
-            if((_maxNumRaisesPerBettingRound == -1) || (_numRaisesThisStage < _maxNumRaisesPerBettingRound))
+            if((_maxRaisesPerStage == -1) || (_numRaisesThisStage < _maxRaisesPerStage))
             {
                 yourAction = EActionType.ActionRaise;
                 amount = minRaise;

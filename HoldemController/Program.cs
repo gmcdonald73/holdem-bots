@@ -29,6 +29,8 @@ namespace HoldemController
         private int _botTimeOutMilliSeconds = 5000;
         private bool _bRandomDealer = true;
         private bool _bRandomSeating = true;
+        private bool _bPauseAfterEachHand = false;
+        private int _sleepAfterActionMilliSeconds = 0;
 
         static void Main()
         {
@@ -44,6 +46,7 @@ namespace HoldemController
             }
 
             Logger.Close();
+            TimingLogger.Close();
 
             Console.WriteLine("-- press any key to exit --");
             Console.ReadKey();
@@ -180,11 +183,13 @@ namespace HoldemController
                     MoveDealerAndBlinds();
                 }
 
-/*
-                ConsoleKeyInfo cki;
-                cki= System.Console.ReadKey();
-                bDone = (cki.Key == ConsoleKey.Escape);
-*/
+                if(_bPauseAfterEachHand)
+                {
+                    System.Console.WriteLine("--- Press any key to continue (ESC to exit) ---"); 
+                    ConsoleKeyInfo cki;
+                    cki= System.Console.ReadKey();
+                    bDone = (cki.Key == ConsoleKey.Escape);
+                }
             }
 
             EndOfGame();
@@ -224,6 +229,8 @@ namespace HoldemController
             gameConfigSettings.Add("botTimeOutMilliSeconds", _botTimeOutMilliSeconds.ToString());
             gameConfigSettings.Add("randomDealer", _bRandomDealer.ToString());
             gameConfigSettings.Add("randomSeating", _bRandomSeating.ToString());
+            gameConfigSettings.Add("pauseAfterEachHand", _bPauseAfterEachHand.ToString());
+            gameConfigSettings.Add("sleepAfterActionMilliSeconds", _sleepAfterActionMilliSeconds.ToString());
 
             // add or update values in dictionary from values in xml
             foreach(XAttribute attr in gameRules.Attributes())
@@ -248,6 +255,8 @@ namespace HoldemController
             _botTimeOutMilliSeconds = Convert.ToInt32(gameConfigSettings["botTimeOutMilliSeconds"]);
             _bRandomDealer = Convert.ToBoolean(gameConfigSettings["randomDealer"]);
             _bRandomSeating = Convert.ToBoolean(gameConfigSettings["randomSeating"]);
+            _bPauseAfterEachHand = Convert.ToBoolean(gameConfigSettings["pauseAfterEachHand"]);
+            _sleepAfterActionMilliSeconds = Convert.ToInt32(gameConfigSettings["sleepAfterActionMilliSeconds"]);
 
             // Create players
             var xplayers = doc.Descendants("Player");
@@ -423,9 +432,16 @@ namespace HoldemController
         }
 
         // broadcast action of a player to all players (including themselves)
-        private void BroadcastAction(EStage stage, int playerNumDoingAction, EActionType action, int amount)
+        private void BroadcastAction(EStage stage, int playerNumDoingAction, EActionType action, int amount, int callAmount = 0)
         {
-            var sLogMsg = string.Format("Player {0} {1} {2}", playerNumDoingAction, action, amount);
+            string sLogMsg = "";
+
+            sLogMsg += string.Format("Player {0} {1} {2}", playerNumDoingAction, action, amount);
+
+            if(action == EActionType.ActionRaise)
+            {
+                sLogMsg += string.Format(" ({0} call + {1} raise)", callAmount, amount - callAmount);
+            }
 
             if (_players[playerNumDoingAction].StackSize <= 0)
             {
@@ -437,6 +453,11 @@ namespace HoldemController
             foreach (var player in _players)
             {
                 player.SeeAction(stage, playerNumDoingAction, action, amount);
+            }
+
+            if(_sleepAfterActionMilliSeconds > 0)
+            {
+                System.Threading.Thread.Sleep(_sleepAfterActionMilliSeconds);
             }
         }
 
@@ -533,7 +554,7 @@ namespace HoldemController
 						}
                     }
 
-                    BroadcastAction(stage, currBettor, playersAction, playersBetAmount);
+                    BroadcastAction(stage, currBettor, playersAction, playersBetAmount, callAmount);
                 }
 
                 // if this player is last to act or only one active player left then bDone = true

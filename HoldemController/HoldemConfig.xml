@@ -7,14 +7,16 @@
              doubleBlindFrequency="19" 
              botTimeOutMilliSeconds ="1000"
              randomDealer="true" 
-             randomSeating="true" />
+             randomSeating="true"
+             pauseAfterEachHand="false"
+             sleepAfterActionMilliSeconds="0"
+             />
   <Players>
 		<Player dll="CallerBot.dll" />
-    <Player dll="RaiserBot.dll" maxNumRaisesPerBettingRound="3" />
+    <Player dll="RaiserBot.dll" maxRaisesPerStage="3" />
     <Player dll="RandomBot.dll" />
     <Player dll="CallerBot.dll" />
-    <Player dll="RaiserBot.dll" />
-    <Player dll="CallerBot.dll" />
     <Player dll="ObserverBot.dll" />
+    <Player dll="RandomBot.dll" />
   </Players>
 </HoldemConfig>
