@@ -6,7 +6,7 @@ using HoldemPlayerContract;
 namespace ObserverBot
 {
     // this bot is not an active player, but simply watches the game,  records stats and writes them to a log file -  playerinfo.txt
-    public class ObserverBot : MarshalByRefObject, IHoldemPlayer
+    public class ObserverBot : BaseBot
     {
         private class PlayerStats
         {
@@ -19,12 +19,10 @@ namespace ObserverBot
             public int NumShowdowns;
             public int NumHandsWon;
             public bool bWonThisHand;
-            public bool bIsObserver;
 
-            public PlayerStats(int pPlayerNum, bool pbIsObserver)
+            public PlayerStats(int pPlayerNum)
             {
                 PlayerNum = pPlayerNum;
-                bIsObserver = pbIsObserver;
                 NumHandsPlayed = 0;
                 NumPreFlopsFolded = 0;
                 NumFlopsFolded = 0;
@@ -42,7 +40,7 @@ namespace ObserverBot
         TextWriter _tw;
         private PlayerStats [] playerStats;
 
-        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
+        public override void InitPlayer(int playerNum, GameConfig gameConfig, Dictionary<string, string> playerConfigSettings)
         {
             // This is called once at the start of the game. playerNum is your unique identifer for the game
             _playerNum = playerNum;
@@ -50,7 +48,7 @@ namespace ObserverBot
             _tw = new StreamWriter("playerinfo.txt", false);
         }
 
-        public string Name
+        public override string Name
         {
             // return the name of your player
             get
@@ -59,7 +57,7 @@ namespace ObserverBot
             }
         }
 
-        public bool IsObserver
+        public override bool IsObserver
         {
             get
             {
@@ -67,7 +65,7 @@ namespace ObserverBot
             }
         }
 
-        public void InitHand(int numPlayers, PlayerInfo[] players)
+        public override void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
         {
             // this is called at the start of every hand and tells you the current status of all players (e.g. if is alive and stack size and who is dealer)
             // create a writer and open the file
@@ -81,11 +79,8 @@ namespace ObserverBot
 
                 foreach (PlayerInfo p in players)
                 {
-                    playerStats[p.PlayerNum] = new PlayerStats(p.PlayerNum, p.IsObserver);
-                    if(!p.IsObserver)
-                    {
-                        sHeader += p.PlayerNum + "-" + p.Name + "\t";
-                    }
+                    playerStats[p.PlayerNum] = new PlayerStats(p.PlayerNum);
+                    sHeader += p.PlayerNum + "-" + p.Name + "\t";
                 }
 
                 // write a line of text to the file
@@ -96,10 +91,7 @@ namespace ObserverBot
 
             foreach (PlayerInfo p in players)
             {
-                if(!p.IsObserver)
-                {
-                    sStackSizes += p.StackSize + "\t";
-                }
+                sStackSizes += p.StackSize + "\t";
 
                 if (p.IsAlive)
                 {
@@ -112,11 +104,7 @@ namespace ObserverBot
             _tw.WriteLine(sStackSizes);
         }
 
-        public void ReceiveHoleCards(Card hole1, Card hole2)
-        {
-        }
-
-        public void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
+        public override void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
         {
             // this is called to inform you when any player (including yourself) makes an action (eg puts in blinds, checks, folds, calls, raises, or wins hand)
             if (action == EActionType.ActionFold)
@@ -149,24 +137,7 @@ namespace ObserverBot
 
         }
 
-        public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
-        {
-            amount = 0;
-            yourAction = EActionType.ActionFold;
-        }
-
-        public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
-        {
-            // this is called to inform you of the board cards (3 flop cards, turn and river)
-        }
-
-        public void SeePlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
-        {
-            // this is called to inform you of another players hand during the show down. 
-            // bestHand is the best hand that they can form with their hole cards and the five board cards
-        }
-
-        public void EndOfGame(int numPlayers, PlayerInfo[] players)
+        public override void EndOfGame(int numPlayers, List<PlayerInfo> players)
         {
             _handNum++;
 
@@ -174,10 +145,7 @@ namespace ObserverBot
 
             foreach (PlayerInfo p in players)
             {
-                if(!p.IsObserver)
-                {
-                    sStackSizes += p.StackSize + "\t";
-                }
+                sStackSizes += p.StackSize + "\t";
             }
 
             // write a line of text to the file
@@ -189,21 +157,18 @@ namespace ObserverBot
 
             foreach (PlayerStats p in playerStats)
             {
-                if(!p.bIsObserver)
-                {
-                    p.NumShowdowns = p.NumHandsPlayed - (p.NumPreFlopsFolded + p.NumFlopsFolded + p.NumTurnsFolded + p.NumRiversFolded);
+                p.NumShowdowns = p.NumHandsPlayed - (p.NumPreFlopsFolded + p.NumFlopsFolded + p.NumTurnsFolded + p.NumRiversFolded);
 
-                    _tw.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}",
-                            p.PlayerNum,
-                            p.NumHandsPlayed,
-                            p.NumPreFlopsFolded,
-                            p.NumFlopsFolded,
-                            p.NumTurnsFolded,
-                            p.NumRiversFolded,
-                            p.NumShowdowns,
-                            p.NumHandsWon
-                        );
-                }
+                _tw.WriteLine("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}",
+                        p.PlayerNum,
+                        p.NumHandsPlayed,
+                        p.NumPreFlopsFolded,
+                        p.NumFlopsFolded,
+                        p.NumTurnsFolded,
+                        p.NumRiversFolded,
+                        p.NumShowdowns,
+                        p.NumHandsWon
+                    );
             }
 
             // close the stream

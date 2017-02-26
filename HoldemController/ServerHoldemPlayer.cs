@@ -44,13 +44,10 @@ namespace HoldemController
             return _lastMethodElapsedTime.Ticks;
         }
 
-        public ServerHoldemPlayer(int pPlayerNum, Dictionary<string, string> playerConfigSettings)
+        public ServerHoldemPlayer(int sandBoxNum, string dllName)
         {
             string botDir = "bots\\";
-            string dllFile = botDir + playerConfigSettings["dll"];
-            PlayerNum = pPlayerNum;
-            StackSize = Convert.ToInt32(playerConfigSettings["startingStack"]);
-            _botTimeOutMilliSeconds = Convert.ToInt32(playerConfigSettings["botTimeOutMilliSeconds"]);
+            string dllFile = botDir + dllName;
 
             IsActive = true;
             IsAlive = true;
@@ -96,22 +93,24 @@ namespace HoldemController
                 permSet.AddPermission(new SecurityPermission(SecurityPermissionFlag.Execution));
 
                 //Now we have everything we need to create the AppDomain, so let's create it.
-                _newDomain = AppDomain.CreateDomain("SandBox" + pPlayerNum, null, adSetup, permSet); 
+                _newDomain = AppDomain.CreateDomain("SandBox" + sandBoxNum, null, adSetup, permSet); 
 
                 // Now create an instance of the bot class inside the new appdomain
                 _player = (IHoldemPlayer)_newDomain.CreateInstanceAndUnwrap(an.FullName, botType.FullName);
             }    
-
-            InitPlayer(pPlayerNum, playerConfigSettings);
         }
 
-        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
+        public void InitPlayer(int pPlayerNum, GameConfig gameConfig, Dictionary<string, string> playerConfigSettings)
         {
+            PlayerNum = pPlayerNum;
+            StackSize =  gameConfig.StartingStack;
+            _botTimeOutMilliSeconds = gameConfig.BotTimeOutMilliSeconds;
+
             if (_botTimeOutMilliSeconds > 0)
             {
                 if (!IsBotBusy())
                 {
-                    _task = Task.Run(() => { RunInitPlayer(playerNum, playerConfigSettings); });
+                    _task = Task.Run(() => { RunInitPlayer(pPlayerNum, gameConfig, playerConfigSettings); });
 
                     // wait X amount of time for task to complete
                     if (!_task.Wait(_botTimeOutMilliSeconds))
@@ -130,10 +129,10 @@ namespace HoldemController
             else
             {
                 // timeout code disabled - just called method directly
-                RunInitPlayer(playerNum, playerConfigSettings);
+                RunInitPlayer(pPlayerNum, gameConfig, playerConfigSettings);
             }
 
-            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, pPlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
 
             if (IsObserver)
             {
@@ -143,13 +142,13 @@ namespace HoldemController
             }
         }
 
-        private void RunInitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
+        private void RunInitPlayer(int playerNum, GameConfig gameConfig, Dictionary<string, string> playerConfigSettings)
         {
             try
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
-                _player.InitPlayer(playerNum, playerConfigSettings);
+                _player.InitPlayer(playerNum, gameConfig, playerConfigSettings);
                 stopWatch.Stop();
                 _lastMethodElapsedTime = stopWatch.Elapsed;
             }
@@ -279,7 +278,7 @@ namespace HoldemController
             }
         }
 
-        public void InitHand(int numPlayers, PlayerInfo[] players)
+        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
         {
             _handNum++;
             IsActive = IsAlive;
@@ -291,7 +290,7 @@ namespace HoldemController
 
                 if (!IsBotBusy())
                 {
-                    _task = Task.Run(() => { RunInitHand(numPlayers, players); });
+                    _task = Task.Run(() => { RunInitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize); });
 
                     // wait X amount of time for task to complete
                     if (!_task.Wait(_botTimeOutMilliSeconds))
@@ -310,20 +309,20 @@ namespace HoldemController
             else
             {
                 // timeout code disabled - just called method directly
-                RunInitHand(numPlayers, players);
+                RunInitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize);
             }
 
             TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
 
         }
 
-        private void RunInitHand(int numPlayers, PlayerInfo[] players)
+        private void RunInitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
         {
             try
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
-                _player.InitHand(numPlayers, players);
+                _player.InitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize);
                 stopWatch.Stop();
                 _lastMethodElapsedTime = stopWatch.Elapsed;
             }
@@ -724,7 +723,7 @@ namespace HoldemController
             }
         }
 
-        public void EndOfGame(int numPlayers, PlayerInfo[] players)
+        public void EndOfGame(int numPlayers, List<PlayerInfo> players)
         {
             if (_botTimeOutMilliSeconds > 0)
             {
@@ -761,7 +760,7 @@ namespace HoldemController
             }
         }
 
-        private void RunEndOfGame(int numPlayers, PlayerInfo[] players)
+        private void RunEndOfGame(int numPlayers, List<PlayerInfo> players)
         {
             try
             {

@@ -10,6 +10,7 @@ namespace HoldemController
     class Program
     {
         private ServerHoldemPlayer[] _players;
+        private List<ServerHoldemPlayer> _allBots;
         private readonly Deck _deck = new Deck();
         private readonly PotManager _potMan = new PotManager();
         private int _totalMoneyInGame;
@@ -217,6 +218,7 @@ namespace HoldemController
             }
 
             // Get game rules
+
             Dictionary<string, string> gameConfigSettings = new Dictionary<string, string>();
 
             // add defaults to dictionary
@@ -258,70 +260,113 @@ namespace HoldemController
             _bPauseAfterEachHand = Convert.ToBoolean(gameConfigSettings["pauseAfterEachHand"]);
             _sleepAfterActionMilliSeconds = Convert.ToInt32(gameConfigSettings["sleepAfterActionMilliSeconds"]);
 
+            GameConfig gameConfig = new GameConfig();
+            gameConfig.LittleBlindSize = _littleBlindSize;
+            gameConfig.BigBlindSize = _bigBlindSize;
+            gameConfig.StartingStack = _startingStack;
+            gameConfig.MaxNumRaisesPerBettingRound = _maxNumRaisesPerBettingRound;
+            gameConfig.MaxHands = _maxHands;
+            gameConfig.DoubleBlindFrequency = _doubleBlindFrequency;
+            gameConfig.BotTimeOutMilliSeconds = _botTimeOutMilliSeconds;
+            gameConfig.RandomDealer = _bRandomDealer;
+            gameConfig.RandomSeating = _bRandomSeating;
+
             // Create players
             var xplayers = doc.Descendants("Player");
             int i = 0;
-            int numLivePlayers = 0;
+            int numBots = 0; // players and observers
 
-            _numPlayers = xplayers.Count();
+            numBots = xplayers.Count();
 
-            if(_numPlayers == 0)
+            if(numBots == 0)
             {
                 throw new Exception("No Player elements found in HoldemConfig.xml");
             }
 
+            _allBots = new List<ServerHoldemPlayer>();
+            List<Dictionary<string, string>> playerConfigSettingsList = new List<Dictionary<string, string>>();
+
+            // Create bots - work out how many player and how many observers
+            int botNum = 0;
+            foreach (var player in xplayers)
+            {
+                Dictionary<string,string> playerConfigSettings = new Dictionary<string, string>();
+
+                // read player attributes, add to player config
+                foreach (XAttribute attr in player.Attributes())
+                {
+                    playerConfigSettings.Add(attr.Name.ToString(), attr.Value);
+                }
+
+                playerConfigSettingsList.Add(playerConfigSettings);
+                ServerHoldemPlayer bot = new ServerHoldemPlayer(botNum,  playerConfigSettings["dll"]);
+                _allBots.Add(bot);
+                botNum++;
+
+                if(!bot.IsObserver)
+                {
+                    _numPlayers++;
+                }
+            }
+            
+            // Create array to hold players (actual players not observers)
             _players = new ServerHoldemPlayer[_numPlayers];
 
             var rnd = new Random();
             List<int> unusedSlots = new List<int>();
-            int playerNum = 0;
 
             for(i=0; i< _numPlayers; i++)
             {
                 unusedSlots.Add(i);
             }
 
-            foreach (var player in xplayers)
-            {
-                // copy game config settings to player config
-                Dictionary<string, string> playerConfigSettings = new Dictionary<string, string>(gameConfigSettings);
+            // assign id to each bot and call InitPlayer
+            int nextObserverId = _numPlayers;
+            int nextPlayerId = 0;
 
-                // read player attributes, add to player config or override game settings
-                foreach (XAttribute attr in player.Attributes())
+            botNum = 0;
+
+            foreach(var bot in _allBots)
+            {
+                int botId;
+
+                // work out player id
+                if(bot.IsObserver)
                 {
-                    if(playerConfigSettings.ContainsKey(attr.Name.ToString()))
+                    botId = nextObserverId;
+                    nextObserverId++;
+                }
+                else
+                {
+                    if(_bRandomSeating)
                     {
-                        playerConfigSettings[attr.Name.ToString()] = attr.Value;
+                        int pos = rnd.Next(unusedSlots.Count);
+                        botId = unusedSlots[pos];
+                        unusedSlots.RemoveAt(pos);
                     }
                     else
                     {
-                        playerConfigSettings.Add(attr.Name.ToString(), attr.Value);
+                        botId = nextPlayerId;
+                        nextPlayerId++;
                     }
                 }
 
-                if(_bRandomSeating)
-                {
-                    int pos = rnd.Next(unusedSlots.Count);
-                    playerNum = unusedSlots[pos];
-                    unusedSlots.RemoveAt(pos);
-                }
+                // !!! currently need to ensure that playerNum matches players index in _players because some crappy code is relying on this 
+                bot.InitPlayer(botId, gameConfig, playerConfigSettingsList[botNum]);
 
-                _players[playerNum] = new ServerHoldemPlayer(playerNum, playerConfigSettings);
-
-                if(_players[playerNum].IsAlive)
+                // Just call this to preload this and write entry to timing log
+                string sName = bot.Name;
+                botNum++;
+                 
+                if(!bot.IsObserver)
                 {
-                    numLivePlayers++;
-                }
-
-                if(!_bRandomSeating)
-                {
-                    playerNum++;
+                    _players[botId] = bot;
                 }
             }
 
-            if(numLivePlayers < 2 || numLivePlayers > 23)
+            if(_numPlayers < 2 || _numPlayers > 23)
             {
-                throw new Exception(String.Format("The number of live (non observer) players found is {0}. It must be between 2 and 23", numLivePlayers));
+                throw new Exception(String.Format("The number of live (non observer) players found is {0}. It must be between 2 and 23", _numPlayers));
             }
         }
 
@@ -335,7 +380,7 @@ namespace HoldemController
                 _bigBlindSize *= 2;
             }
             
-            PlayerInfo[] playerInfo = new PlayerInfo[_numPlayers];
+            List<PlayerInfo> playerInfoList = new List<PlayerInfo>();
 
             Logger.Log("");
             Logger.Log("---------*** HAND {0} ***----------", handNum);
@@ -343,17 +388,18 @@ namespace HoldemController
 
             for (var i = 0; i < _players.Length; i++)
             {
-                Logger.Log("{0}\t{1}\t{2}\t{3}\t{4}", i, _players[i].Name, _players[i].IsAlive, _players[i].StackSize, i == _dealerPlayerNum);
-                var pInfo = new PlayerInfo(i, _players[i].Name.PadRight(20), _players[i].IsAlive, _players[i].StackSize, i == _dealerPlayerNum, _players[i].IsObserver);
-                playerInfo[i] = pInfo;
+                ServerHoldemPlayer shp = _players[i];
+                Logger.Log("{0}\t{1}\t{2}\t{3}\t{4}", i, shp.Name, shp.IsAlive, shp.StackSize, i == _dealerPlayerNum);
+                var pInfo = new PlayerInfo(i, shp.Name.PadRight(20), shp.IsAlive, shp.StackSize);
+                playerInfoList.Add(pInfo);
             }
 
             Logger.Log("---------------");
 
             // broadcast player info to all players
-            foreach (var player in _players)
+            foreach (var player in _allBots)
             {
-                player.InitHand(_players.Length, playerInfo);
+                player.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _littleBlindSize, _bigBlindSize);
             }
 
             // shuffle deck
@@ -362,7 +408,7 @@ namespace HoldemController
 
         private void EndOfGame()
         {
-            var playerInfo = new PlayerInfo[_numPlayers];
+            List<PlayerInfo> playerInfoList = new List<PlayerInfo>();
 
             Logger.Log("");
             Logger.Log("---------*** GAME OVER ***----------");
@@ -370,17 +416,18 @@ namespace HoldemController
 
             for (var i = 0; i < _players.Length; i++)
             {
-                Logger.Log("{0}\t{1}\t{2}\t{3}\t{4}", i, _players[i].Name, _players[i].IsAlive, _players[i].StackSize, i == _dealerPlayerNum);
-                var pInfo = new PlayerInfo(i, _players[i].Name.PadRight(20), _players[i].IsAlive, _players[i].StackSize, i == _dealerPlayerNum, _players[i].IsObserver);
-                playerInfo[i] = pInfo;
+                ServerHoldemPlayer shp = _players[i];
+                Logger.Log("{0}\t{1}\t{2}\t{3}\t{4}", i, shp.Name, shp.IsAlive, shp.StackSize, i == _dealerPlayerNum);
+                var pInfo = new PlayerInfo(i, shp.Name.PadRight(20), shp.IsAlive, shp.StackSize);
+                playerInfoList.Add(pInfo);
             }
 
             Logger.Log("---------------");
 
             // broadcast player info to all players
-            foreach (var player in _players)
+            foreach (var player in _allBots)
             {
-                player.EndOfGame(_players.Length, playerInfo);
+                player.EndOfGame(playerInfoList.Count, playerInfoList);
             }
         }
 
@@ -425,7 +472,7 @@ namespace HoldemController
         {
             Logger.Log("{0} {1}", cardType, boardCard.ValueStr());
 
-            foreach (var player in _players)
+            foreach (var player in _allBots)
             {
                 player.SeeBoardCard(cardType, boardCard);
             }
@@ -450,7 +497,7 @@ namespace HoldemController
 
             Logger.Log(sLogMsg);
 
-            foreach (var player in _players)
+            foreach (var player in _allBots)
             {
                 player.SeeAction(stage, playerNumDoingAction, action, amount);
             }
@@ -467,7 +514,7 @@ namespace HoldemController
             var card1 = _players[playerNum].HoleCards()[0];
             var card2 = _players[playerNum].HoleCards()[1];
 
-            foreach (var player in _players)
+            foreach (var player in _allBots)
             {
                 player.SeePlayerHand(playerNum, card1, card2, playerBestHand);
             }

@@ -9,12 +9,12 @@ using HoldemPlayerContract;
 namespace RaiserBot
 {
     // this bot will always bet the minimum raise at every opportunity
-    public class RaiserBot : MarshalByRefObject, IHoldemPlayer
+    public class RaiserBot : BaseBot
     {
         private int _numRaisesThisStage;
         private int _maxRaisesPerStage = -1;
 
-        public void InitPlayer(int playerNum, Dictionary<string, string> playerConfigSettings)
+        public override void InitPlayer(int playerNum, GameConfig gameConfig, Dictionary<string, string> playerConfigSettings)
         {
             if (playerConfigSettings.ContainsKey("maxRaisesPerStage"))
             {
@@ -22,7 +22,7 @@ namespace RaiserBot
             }
         }
 
-        public string Name
+        public override string Name
         {
             get
             {
@@ -30,28 +30,12 @@ namespace RaiserBot
             }
         }
 
-        public bool IsObserver
-        {
-            get
-            {
-                return false;
-            }
-        }
-
-        public void InitHand(int numPlayers, PlayerInfo[] players)
+        public override void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
         {
             _numRaisesThisStage = 0;
         }
 
-        public void ReceiveHoleCards(Card hole1, Card hole2)
-        {
-        }
-
-        public void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
-        {
-        }
-
-        public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
         {
             if((_maxRaisesPerStage == -1) || (_numRaisesThisStage < _maxRaisesPerStage))
             {
@@ -67,18 +51,9 @@ namespace RaiserBot
         }
 
 
-        public void SeeBoardCard(EBoardCardType cardType, Card boardCard)
+        public override void SeeBoardCard(EBoardCardType cardType, Card boardCard)
         {
             _numRaisesThisStage = 0;
         }
-
-        public void SeePlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
-        {
-        }
-
-        public void EndOfGame(int numPlayers, PlayerInfo[] players)
-        {
-        }
-
     }
 }
