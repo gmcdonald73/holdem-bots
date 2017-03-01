@@ -590,7 +590,7 @@ namespace HoldemController
                     // get the players action
                     EActionType playersAction;
                     int playersBetAmount;
-                    player.GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
+                    player.GetAction(stage, callLevel, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
 
                     // *** DO ACTION ***
                     if (playersAction == EActionType.ActionFold)
@@ -784,7 +784,7 @@ namespace HoldemController
                 var potsInvolvedIn = _potMan.GetPotsInvolvedIn(currPlayer);
                 if (player.StackSize > 0 && (uncontestedPots.Intersect(potsInvolvedIn).Count() == 0))
                 {
-                    player.GetAction(EStage.StageShowdown, 0, 0, 0, 0, _potMan.Size(), out playersAction, out playersAmount);
+                    player.GetAction(EStage.StageShowdown, 0, 0, 0, 0, 0, _potMan.Size(), out playersAction, out playersAmount);
                 }
                 else
                 {

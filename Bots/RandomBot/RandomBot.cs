@@ -28,7 +28,7 @@ namespace RandomBot
             }
         }
 
-        public override void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
         {
             yourAction = EActionType.ActionFold;
             amount = 0;

@@ -443,7 +443,7 @@ namespace HoldemController
         }
 
 
-        public void GetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType playersAction, out int playersBetAmount)
+        public void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType playersAction, out int playersBetAmount)
         {
             // Default to fold if exception or timeout
             playersAction = EActionType.ActionFold;
@@ -453,7 +453,7 @@ namespace HoldemController
             {
                 if (!IsBotBusy())
                 {
-                    _task = Task.Run(() => { RunGetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize);});
+                    _task = Task.Run(() => { RunGetAction(stage, betSize, callAmount, minRaise, maxRaise, raisesRemaining, potSize);});
 
                     // wait X amount of time for task to complete
                     // if method has not returned in time then use default action
@@ -477,7 +477,7 @@ namespace HoldemController
             else
             {
                 // timeout code disabled - just called method directly
-                RunGetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize);
+                RunGetAction(stage, betSize, callAmount, minRaise, maxRaise, raisesRemaining, potSize);
                 playersAction = _playersAction;
                 playersBetAmount = _playersBetAmount;
             }
@@ -488,14 +488,14 @@ namespace HoldemController
 
         }
 
-        private void RunGetAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize)
+        private void RunGetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize)
         {
             try
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
                 // call player.GetAction - can't put out params in anonymous method above so doing it this way
-                _player.GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, potSize, out _playersAction, out _playersBetAmount);
+                _player.GetAction(stage, betSize, callAmount, minRaise, maxRaise, raisesRemaining, potSize, out _playersAction, out _playersBetAmount);
                 stopWatch.Stop();
                 _lastMethodElapsedTime = stopWatch.Elapsed;
             }
