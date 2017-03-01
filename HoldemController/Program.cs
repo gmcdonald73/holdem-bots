@@ -9,6 +9,8 @@ namespace HoldemController
 {
     class Program
     {
+        private List<IDisplay> _displays = new List<IDisplay>();
+
         private ServerHoldemPlayer[] _players;
         private List<ServerHoldemPlayer> _allBots;
         private readonly Deck _deck = new Deck();
@@ -32,6 +34,10 @@ namespace HoldemController
         private bool _bRandomSeating = true;
         private bool _bPauseAfterEachHand = false;
         private int _sleepAfterActionMilliSeconds = 0;
+        private bool _bGraphicsDisplay = false;
+
+        private int _width = (int) (Console.LargestWindowWidth * .7);
+        private int _height = (int) (Console.LargestWindowHeight * .7);
 
         static void Main()
         {
@@ -49,6 +55,7 @@ namespace HoldemController
             Logger.Close();
             TimingLogger.Close();
 
+//            Console.SetCursorPosition(0, 0);
             Console.WriteLine("-- press any key to exit --");
             Console.ReadKey();
         }
@@ -139,14 +146,13 @@ namespace HoldemController
                     }
                 }
 
-                ViewCash();
+                // ViewCash();
 
                 var handRanker = new HandRanker();
 
                 if (GetNumActivePlayers() > 1)
                 {
                     Showdown(board, ref handRanker, lastToAct);
-                    handRanker.ViewHandRanks();
                 }
 
                 if (GetNumActivePlayers() > 1)
@@ -233,6 +239,7 @@ namespace HoldemController
             gameConfigSettings.Add("randomSeating", _bRandomSeating.ToString());
             gameConfigSettings.Add("pauseAfterEachHand", _bPauseAfterEachHand.ToString());
             gameConfigSettings.Add("sleepAfterActionMilliSeconds", _sleepAfterActionMilliSeconds.ToString());
+            gameConfigSettings.Add("graphicsDisplay", _bGraphicsDisplay.ToString());
 
             // add or update values in dictionary from values in xml
             foreach(XAttribute attr in gameRules.Attributes())
@@ -259,6 +266,17 @@ namespace HoldemController
             _bRandomSeating = Convert.ToBoolean(gameConfigSettings["randomSeating"]);
             _bPauseAfterEachHand = Convert.ToBoolean(gameConfigSettings["pauseAfterEachHand"]);
             _sleepAfterActionMilliSeconds = Convert.ToInt32(gameConfigSettings["sleepAfterActionMilliSeconds"]);
+            _bGraphicsDisplay = Convert.ToBoolean(gameConfigSettings["graphicsDisplay"]);
+
+            // setup displays
+            if(_bGraphicsDisplay)
+            {
+                _displays.Add(new GraphicsDisplay());
+            }
+
+            TextDisplay textDisplay = new TextDisplay();
+            textDisplay.SetWriteToConsole(!_bGraphicsDisplay);
+            _displays.Add(textDisplay);
 
             GameConfig gameConfig = new GameConfig();
             gameConfig.LittleBlindSize = _littleBlindSize;
@@ -308,6 +326,11 @@ namespace HoldemController
                     _numPlayers++;
                 }
             }
+
+            if(_numPlayers < 2 || _numPlayers > 23)
+            {
+                throw new Exception(String.Format("The number of live (non observer) players found is {0}. It must be between 2 and 23", _numPlayers));
+            }
             
             // Create array to hold players (actual players not observers)
             _players = new ServerHoldemPlayer[_numPlayers];
@@ -351,10 +374,10 @@ namespace HoldemController
                     }
                 }
 
-                // !!! currently need to ensure that playerNum matches players index in _players because some crappy code is relying on this 
+                // Need to ensure that playerId matches a players index in _players because some code is relying on this 
                 bot.InitPlayer(botId, gameConfig, playerConfigSettingsList[botNum]);
 
-                // Just call this to preload this and write entry to timing log
+                // Just call this to preload Name and write entry to timing log
                 string sName = bot.Name;
                 botNum++;
                  
@@ -364,9 +387,9 @@ namespace HoldemController
                 }
             }
 
-            if(_numPlayers < 2 || _numPlayers > 23)
+            foreach(IDisplay d  in _displays)
             {
-                throw new Exception(String.Format("The number of live (non observer) players found is {0}. It must be between 2 and 23", _numPlayers));
+                d.Initialise(gameConfig, _numPlayers, _sleepAfterActionMilliSeconds);
             }
         }
 
@@ -382,24 +405,22 @@ namespace HoldemController
             
             List<PlayerInfo> playerInfoList = new List<PlayerInfo>();
 
-            Logger.Log("");
-            Logger.Log("---------*** HAND {0} ***----------", handNum);
-            Logger.Log("Num\tName\tIsAlive\tStackSize\tIsDealer");
-
             for (var i = 0; i < _players.Length; i++)
             {
                 ServerHoldemPlayer shp = _players[i];
-                Logger.Log("{0}\t{1}\t{2}\t{3}\t{4}", i, shp.Name, shp.IsAlive, shp.StackSize, i == _dealerPlayerNum);
                 var pInfo = new PlayerInfo(i, shp.Name.PadRight(20), shp.IsAlive, shp.StackSize);
                 playerInfoList.Add(pInfo);
             }
-
-            Logger.Log("---------------");
 
             // broadcast player info to all players
             foreach (var player in _allBots)
             {
                 player.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _littleBlindSize, _bigBlindSize);
+            }
+
+            foreach(IDisplay d in _displays)
+            {
+                d.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _littleBlindSize, _bigBlindSize);
             }
 
             // shuffle deck
@@ -410,24 +431,22 @@ namespace HoldemController
         {
             List<PlayerInfo> playerInfoList = new List<PlayerInfo>();
 
-            Logger.Log("");
-            Logger.Log("---------*** GAME OVER ***----------");
-            Logger.Log("Num\tName\tIsAlive\tStackSize\tIsDealer");
-
             for (var i = 0; i < _players.Length; i++)
             {
                 ServerHoldemPlayer shp = _players[i];
-                Logger.Log("{0}\t{1}\t{2}\t{3}\t{4}", i, shp.Name, shp.IsAlive, shp.StackSize, i == _dealerPlayerNum);
                 var pInfo = new PlayerInfo(i, shp.Name.PadRight(20), shp.IsAlive, shp.StackSize);
                 playerInfoList.Add(pInfo);
             }
-
-            Logger.Log("---------------");
 
             // broadcast player info to all players
             foreach (var player in _allBots)
             {
                 player.EndOfGame(playerInfoList.Count, playerInfoList);
+            }
+
+            foreach(IDisplay d in _displays)
+            {
+                d.DisplayEndOfGame(playerInfoList.Count, playerInfoList);
             }
         }
 
@@ -463,60 +482,64 @@ namespace HoldemController
             {
                 var hole1 = _deck.DealCard();
                 var hole2 = _deck.DealCard();
-                Logger.Log("Player {0} hole cards {1} {2}", player.PlayerNum, hole1.ValueStr(), hole2.ValueStr());
+
                 player.ReceiveHoleCards(hole1, hole2);
+
+                foreach(IDisplay d in _displays)
+                {
+                    d.DisplayHoleCards(player.PlayerNum, hole1, hole2);
+                }
             }
         }
 
         private void BroadcastBoardCard(EBoardCardType cardType, Card boardCard)
         {
-            Logger.Log("{0} {1}", cardType, boardCard.ValueStr());
-
             foreach (var player in _allBots)
             {
                 player.SeeBoardCard(cardType, boardCard);
+            }
+
+            foreach(IDisplay d in _displays)
+            {
+                d.DisplayBoardCard(cardType, boardCard);
             }
         }
 
         // broadcast action of a player to all players (including themselves)
         private void BroadcastAction(EStage stage, int playerNumDoingAction, EActionType action, int amount, int callAmount = 0)
         {
-            string sLogMsg = "";
-
-            sLogMsg += string.Format("Player {0} {1} {2}", playerNumDoingAction, action, amount);
-
-            if(action == EActionType.ActionRaise)
-            {
-                sLogMsg += string.Format(" ({0} call + {1} raise)", callAmount, amount - callAmount);
-            }
+            int raiseAmount = amount - callAmount;
+            bool isAllIn = false;
 
             if (_players[playerNumDoingAction].StackSize <= 0)
             {
-                sLogMsg += " *ALL IN*";
+                isAllIn = true;
             }
-
-            Logger.Log(sLogMsg);
 
             foreach (var player in _allBots)
             {
                 player.SeeAction(stage, playerNumDoingAction, action, amount);
             }
 
-            if(_sleepAfterActionMilliSeconds > 0)
+            foreach(IDisplay d in _displays)
             {
-                System.Threading.Thread.Sleep(_sleepAfterActionMilliSeconds);
+                d.DisplayAction(stage, playerNumDoingAction, action, amount, callAmount, raiseAmount, isAllIn, _potMan);
             }
         }
 
         private void BroadcastPlayerHand(int playerNum, Hand playerBestHand)
         {
-            Logger.Log("Player {0} Best Hand =  {1} {2}", playerNum, playerBestHand.HandValueStr(), playerBestHand.HandRankStr());
             var card1 = _players[playerNum].HoleCards()[0];
             var card2 = _players[playerNum].HoleCards()[1];
 
             foreach (var player in _allBots)
             {
                 player.SeePlayerHand(playerNum, card1, card2, playerBestHand);
+            }
+
+            foreach(IDisplay d in _displays)
+            {
+                d.DisplayPlayerHand(playerNum, card1, card2, playerBestHand);
             }
         }
 
@@ -556,7 +579,8 @@ namespace HoldemController
             while (!bDone)
             {
                 // dont call GetAction if player is already all in
-                if (_players[currBettor].StackSize > 0)
+                var player = _players[currBettor];
+                if (player.StackSize > 0)
                 {
                     int callAmount;
                     int minRaise;
@@ -566,13 +590,13 @@ namespace HoldemController
                     // get the players action
                     EActionType playersAction;
                     int playersBetAmount;
-                    _players[currBettor].GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
+                    player.GetAction(stage, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
 
                     // *** DO ACTION ***
                     if (playersAction == EActionType.ActionFold)
                     {
                         // if fold then mark player as inactive
-                        _players[currBettor].IsActive = false;
+                        player.IsActive = false;
                     }
                     else if ((playersAction == EActionType.ActionCall) || (playersAction == EActionType.ActionRaise))
                     {
@@ -723,7 +747,7 @@ namespace HoldemController
 
             if (_totalMoneyInGame != potSize + totalPlayersStacks)
             {
-                ViewCash();
+                // ViewCash();
                 throw new Exception(string.Format("money doesn't add up! Money in game = {0}, Stacks = {1}, Pots = {2}", _totalMoneyInGame, totalPlayersStacks, potSize));
             }
         }
@@ -784,6 +808,11 @@ namespace HoldemController
                 currPlayer = GetNextActivePlayer(currPlayer);
 
             } while (currPlayer != firstToAct);
+
+            foreach(IDisplay d in _displays)
+            {
+                d.DisplayShowdown(handRanker, _potMan);
+            }
         }
 
         private void DistributeWinnings(HandRanker handRanker)
@@ -852,10 +881,11 @@ namespace HoldemController
             {
                 if(player.IsAlive && player.StackSize <= 0)
                 {
-                    Logger.Log("Player {0} has been eliminated", player.PlayerNum);
+                    // Logger.Log("Player {0} has been eliminated", player.PlayerNum);
 
                     player.IsAlive = false;
                     player.IsActive = false;
+//                    _display.UpdatePlayer(player);
                 }
             }
         }
@@ -865,73 +895,6 @@ namespace HoldemController
             _dealerPlayerNum = _littleBlindPlayerNum; // note that this player might not be live if just eliminated
             _littleBlindPlayerNum = _bigBlindPlayerNum; // note that this player might not be live if just eliminated
             _bigBlindPlayerNum = GetNextLivePlayer(_bigBlindPlayerNum);
-        }
-
-        public void ViewCash()
-        {
-            var potNum = 0;
-
-            Logger.Log("");
-            Logger.Log("--- View Money ---");
-
-            string sLogMsg;
-            // show player numbers
-            sLogMsg = "Players\t";
-
-            foreach (var player in _players)
-            {
-                if (player.IsAlive)
-                {
-                    sLogMsg += player.PlayerNum + "\t";
-                }
-            }
-
-            sLogMsg += "Total";
-            Logger.Log(sLogMsg);
-
-            // Show stack size
-            sLogMsg  = "Stack\t";
-
-            var totalStackSize = 0;
-            foreach (var player in _players)
-            {
-                if (player.IsAlive)
-                {
-                    sLogMsg += player.StackSize + "\t";
-                    totalStackSize += player.StackSize;
-                }
-            }
-
-            sLogMsg += totalStackSize;
-            Logger.Log(sLogMsg);
-
-            // Show breakdown of each pot
-            foreach (var p in _potMan.Pots)
-            {
-                var playerAmount = new int[_players.Length];
-
-                sLogMsg = "Pot " + potNum + "\t";
-
-                foreach (var pair in p.PlayerContributions)
-                {
-                    playerAmount[pair.Key] = pair.Value;
-                }
-
-                foreach (var player in _players)
-                {
-                    if (player.IsAlive)
-                    {
-                        sLogMsg += playerAmount[player.PlayerNum] + "\t";
-                    }
-                }
-
-                sLogMsg += p.Size();
-                Logger.Log(sLogMsg);
-
-                potNum++;
-            }
-
-            Logger.Log("");
         }
     }
 }

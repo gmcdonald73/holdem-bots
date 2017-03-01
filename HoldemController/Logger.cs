@@ -1,53 +1,65 @@
 ﻿using System.IO;
+using System.Collections.Generic;
+
+using HoldemPlayerContract;
 
 namespace HoldemController
 {
 
-    public class Logger
+    internal class Logger
     {
-        private static readonly TextWriter LogTextWriter;
+        private static readonly TextWriter _logTextWriter;
+        private static bool _writeToConsole = false;
 
         static Logger()
         {
-            if (LogTextWriter == null)
+            if (_logTextWriter == null)
             {
-                LogTextWriter = new StreamWriter("gamelog.txt", false);
+                _logTextWriter = new StreamWriter("gamelog.txt", false);
             }
+        }
+
+        public static void SetWriteToConsole(bool writeToConsole)
+        {
+            _writeToConsole = writeToConsole;
         }
 
         public static void Log(string sMessage, params object[] arg)
         {
-            System.Console.WriteLine(sMessage, arg); 
-            LogTextWriter.WriteLine(sMessage, arg);
+            if(_writeToConsole)
+            {
+                System.Console.WriteLine(sMessage, arg);
+            }
+            _logTextWriter.WriteLine(sMessage, arg);
         }
 
         public static void Close()
         {
-            LogTextWriter.Close();
+            _logTextWriter.Close();
         }
     }
 
     public class TimingLogger
     {
-        private static readonly TextWriter LogTextWriter;
+        private static readonly TextWriter _logTextWriter;
 
         static TimingLogger()
         {
-            if (LogTextWriter == null)
+            if (_logTextWriter == null)
             {
-                LogTextWriter = new StreamWriter("BotCallLog.csv", false);
-                LogTextWriter.WriteLine("Hand,Stage,PlayerNum,MethodName, MillisecondsTaken, OtherInfo1, OtherInfo2, OtherInfo3");
+                _logTextWriter = new StreamWriter("BotCallLog.csv", false);
+                _logTextWriter.WriteLine("Hand,Stage,PlayerNum,MethodName, MillisecondsTaken, OtherInfo1, OtherInfo2, OtherInfo3");
             }
         }
 
         public static void Log(string sMessage, params object[] arg)
         {
-            LogTextWriter.WriteLine(sMessage, arg);
+            _logTextWriter.WriteLine(sMessage, arg);
         }
 
         public static void Close()
         {
-            LogTextWriter.Close();
+            _logTextWriter.Close();
         }
     }
 

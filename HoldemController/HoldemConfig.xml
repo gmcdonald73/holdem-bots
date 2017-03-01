@@ -9,14 +9,16 @@
              randomDealer="true" 
              randomSeating="true"
              pauseAfterEachHand="false"
-             sleepAfterActionMilliSeconds="0"
+             sleepAfterActionMilliSeconds="1000"
+             graphicsDisplay="true"
              />
   <Players>
 		<Player dll="CallerBot.dll" />
     <Player dll="RaiserBot.dll" maxRaisesPerStage="3" />
-    <Player dll="RandomBot.dll" />
     <Player dll="CallerBot.dll" />
     <Player dll="ObserverBot.dll" />
     <Player dll="RandomBot.dll" />
+    <Player dll="CallerBot.dll" />
+    <Player dll="CallerBot.dll" />
   </Players>
 </HoldemConfig>
