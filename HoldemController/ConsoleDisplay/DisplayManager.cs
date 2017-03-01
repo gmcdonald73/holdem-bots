@@ -1,22 +1,20 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
 using HoldemPlayerContract;
 
-namespace HoldemController
+namespace HoldemController.ConsoleDisplay
 {
-
     public class DisplayManager
     {
+        private readonly int _width;
+        private readonly int _height;
+        private readonly int _numPlayers;
+
         private int _boardHeight;
         private int _minBoardWidth;
         private int _maxBoardWidth;
-        private readonly int _width;
-        private readonly int _height;
-//        private readonly List<ServerHoldemPlayer> _players;
-        private int _numPlayers;
+        
         private List<PlayerPosition> _availablePositions;
         private Dictionary<int, PlayerPosition> _playerPositions;
 
@@ -46,7 +44,7 @@ namespace HoldemController
 
             if (_numPlayers > 8)
             {
-                throw new ArgumentOutOfRangeException("numPlayers");
+                throw new ArgumentOutOfRangeException(nameof(numPlayers));
             }
         }
 
@@ -61,15 +59,17 @@ namespace HoldemController
         {
             var midPointX = _width / 2;
             var yPos = (_height - _boardHeight) / 2 / 4;
-            _availablePositions = new List<PlayerPosition>();
-            _availablePositions.Add(new PlayerPosition { X = (int)(midPointX - _minBoardWidth * .35), Y = yPos, Type = PositionType.Top});
-            _availablePositions.Add(new PlayerPosition { X = midPointX - 5, Y = yPos, Type = PositionType.Top });
-            _availablePositions.Add(new PlayerPosition { X = (int)(midPointX + _minBoardWidth * .25 ), Y = yPos, Type = PositionType.Top });
-            _availablePositions.Add(new PlayerPosition { X = _maxBoardWidth + (_width - _maxBoardWidth) / 8, Y = _height / 2 - (_height - _boardHeight) / 4, Type = PositionType.Right });
-            _availablePositions.Add(new PlayerPosition { X = (int)(midPointX + _minBoardWidth * .25 ), Y = _boardHeight, Type = PositionType.Bottom });
-            _availablePositions.Add(new PlayerPosition { X = midPointX - 5, Y = _boardHeight, Type = PositionType.Bottom });
-            _availablePositions.Add(new PlayerPosition { X = (int)(midPointX - _minBoardWidth * .35), Y = _boardHeight, Type = PositionType.Bottom });
-            _availablePositions.Add(new PlayerPosition { X = (_width - _maxBoardWidth) / 4, Y = _height / 2 - (_height - _boardHeight) / 4, Type = PositionType.Left });
+            _availablePositions = new List<PlayerPosition>
+            {
+                new PlayerPosition {X = (int) (midPointX - _minBoardWidth*.35), Y = yPos, Type = PositionType.Top},
+                new PlayerPosition {X = midPointX - 5, Y = yPos, Type = PositionType.Top},
+                new PlayerPosition {X = (int) (midPointX + _minBoardWidth*.25), Y = yPos, Type = PositionType.Top},
+                new PlayerPosition {X = _maxBoardWidth + (_width - _maxBoardWidth)/8, Y = _height/2 - (_height - _boardHeight)/4, Type = PositionType.Right},
+                new PlayerPosition {X = (int) (midPointX + _minBoardWidth*.25), Y = _boardHeight, Type = PositionType.Bottom},
+                new PlayerPosition {X = midPointX - 5, Y = _boardHeight, Type = PositionType.Bottom},
+                new PlayerPosition {X = (int) (midPointX - _minBoardWidth*.35), Y = _boardHeight, Type = PositionType.Bottom},
+                new PlayerPosition {X = (_width - _maxBoardWidth)/4, Y = _height/2 - (_height - _boardHeight)/4, Type = PositionType.Left}
+            };
         }
 
         private void AssignPlayerPositions()
@@ -117,7 +117,7 @@ namespace HoldemController
             var x = pos.X;
             var y = pos.Y;
             var action = act.ToString().Replace("Action", "") + "  ";
-            var bet = amount + "    ";
+            var bet = (((IList) new[] {EActionType.ActionBlind, EActionType.ActionCall, EActionType.ActionRaise}).Contains(act) ? amount.ToString() : string.Empty) + "    ";
             ConsoleLine playerAction;
             ConsoleLine betAmount;
             switch (pos.Type)
@@ -142,10 +142,9 @@ namespace HoldemController
                     throw new ArgumentOutOfRangeException();
             }
             DrawLines(new List<ConsoleLine> { playerAction, betAmount }, ConsoleColor.Black, isAlive ? ConsoleColor.Cyan : ConsoleColor.Red);
-//            Thread.Sleep(200);
         }
 
-        internal void UpdatePlayer(UIPlayer player)
+        internal void UpdatePlayer(UiPlayer player)
         {
             var pos = _playerPositions[player.PlayerNum];
             var x = pos.X;
@@ -272,7 +271,7 @@ namespace HoldemController
                 case ESuitType.SuitUnknown:
                     return " ";
                 default:
-                    throw new ArgumentOutOfRangeException("suit", suit, null);
+                    throw new ArgumentOutOfRangeException(nameof(suit), suit, null);
             }
         }
 
@@ -309,7 +308,7 @@ namespace HoldemController
                 case ERankType.RankUnknown:
                     return " ";
                 default:
-                    throw new ArgumentOutOfRangeException("rank", rank, null);
+                    throw new ArgumentOutOfRangeException(nameof(rank), rank, null);
             }
         }
 
@@ -317,7 +316,7 @@ namespace HoldemController
         {
             var lines = new List<ConsoleLine>();
             _boardHeight = Convert.ToInt32(_height * .7);
-            var y = _height / 2 - (int)(_boardHeight / 2);
+            var y = _height / 2 - _boardHeight / 2;
             var linePercent = .7;
 
             for (var i = 0; i < _boardHeight; i++)
@@ -353,22 +352,5 @@ namespace HoldemController
             }
             return str;
         }
-    }
-
-    public class ConsoleLine
-    {
-        public ConsoleLine(int x, int y, string text, ConsoleColor? color = null, ConsoleColor? backgroundColor = null)
-        {
-            X = x;
-            Y = y;
-            Text = text;
-            Color = color;
-            BackgroundColor = backgroundColor;
-        }
-        public int X { get; set; }
-        public int Y { get; set; }
-        public string Text { get; set; }
-        public ConsoleColor? Color { get; set; }
-        public ConsoleColor? BackgroundColor { get; set; }
     }
 }

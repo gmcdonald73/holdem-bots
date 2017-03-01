@@ -47,9 +47,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConsoleDisplay\ConsoleLine.cs" />
+    <Compile Include="ConsoleDisplay\UiPlayer.cs" />
     <Compile Include="Deck.cs" />
-    <Compile Include="DisplayManager.cs" />
-    <Compile Include="GraphicsDisplay.cs" />
+    <Compile Include="ConsoleDisplay\DisplayManager.cs" />
+    <Compile Include="ConsoleDisplay\GraphicsDisplay.cs" />
     <Compile Include="HandRanker.cs" />
     <Compile Include="HandRankInfo.cs" />
     <Compile Include="IDisplay.cs" />

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
-
+using HoldemController.ConsoleDisplay;
 using HoldemPlayerContract;
 
 namespace HoldemController
@@ -395,7 +395,6 @@ namespace HoldemController
 
         private void InitHand(int handNum)
         {
-
             // Double the blinds if required. Do this here because later on we may want to include this in info to players
             if (_doubleBlindFrequency > 0 && handNum % _doubleBlindFrequency == 0)
             {

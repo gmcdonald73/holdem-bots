@@ -1,43 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using HoldemPlayerContract;
 
-namespace HoldemController
+namespace HoldemController.ConsoleDisplay
 {
-    internal class UIPlayer
-    {
-        public int PlayerNum {get; set; }
-        public string Name  {get; set; }
-        public bool IsAlive  {get; set; }
-        public bool IsActive  {get; set; }
-        public int StackSize  {get; set; }
-        public int BetsThisHand  {get; set; }
-
-        public Card[] HoleCards;
-
-        public UIPlayer(int pPlayerNum, string pName, bool pIsAlive, int pStackSize)
-        {
-            PlayerNum = pPlayerNum;
-            Name = pName;
-            IsAlive = pIsAlive;
-            IsActive = pIsAlive;
-            StackSize = pStackSize;
-            BetsThisHand = 0;
-            HoleCards = new Card[2];
-        }
-    }
-
     internal class GraphicsDisplay : IDisplay
     {
         private DisplayManager _display;
-        private Card [] _board;
-        private int _boardCardNum = 0;
-        private UIPlayer [] _players;
-        private int _sleepAfterActionMilliSeconds = 0;
+        private Card[] _board;
+        private int _boardCardNum;
+        private Dictionary<int, UiPlayer> _players;
+        private int _sleepAfterActionMilliSeconds;
 
         public void Initialise(GameConfig gameConfig, int numPlayers, int sleepAfterActionMilliSeconds) 
         {
@@ -54,30 +26,34 @@ namespace HoldemController
             _display.UpdateCommunityCards(_board);
 
             // create or update player profiles
-            if (handNum == 1)
+            if (handNum == 1) // todo: should be doing this at game start, not hand init
             {
-                _players = new UIPlayer[numPlayers];
-
-                foreach (PlayerInfo p in players)
+                _players = new Dictionary<int, UiPlayer>(players.Count);
+                foreach (var player in players)
                 {
-                    _players[p.PlayerNum] = new UIPlayer(p.PlayerNum, p.Name, p.IsAlive, p.StackSize);
+                    _players.Add(player.PlayerNum, new UiPlayer(player.PlayerNum, player.Name, player.IsAlive, player.StackSize));
                 }
             }
             else
             {
-                foreach (PlayerInfo p in players)
+                foreach (var player in players)
                 {
-                    _players[p.PlayerNum].IsAlive = p.IsAlive;
-                    _players[p.PlayerNum].IsActive = p.IsAlive; // if alive then player is active at start of hand
-                    _players[p.PlayerNum].BetsThisHand = 0;
-                    _players[p.PlayerNum].StackSize = p.StackSize;
+                    var uiPlayer = _players[player.PlayerNum];
+                    uiPlayer.IsAlive = player.IsAlive;
+                    uiPlayer.IsActive = player.IsAlive; // if alive then player is active at start of hand
+                    uiPlayer.BetsThisHand = 0;
+                    uiPlayer.StackSize = player.StackSize;
                 }
+            }
+            foreach (var player in _players.Values)
+            {
+                _display.UpdatePlayer(player); // clears previous rounds cards 
             }
         }
 
         public void DisplayHoleCards(int playerId, Card hole1, Card hole2)
         {
-            UIPlayer player = _players[playerId];
+            var player = _players[playerId];
 
             player.HoleCards[0] = hole1;
             player.HoleCards[1] = hole2;
@@ -92,7 +68,7 @@ namespace HoldemController
 
         public void DisplayAction(EStage stage, int playerId, EActionType action, int totalAmount, int callAmount, int raiseAmount, bool isAllIn, PotManager potMan)
         {
-            UIPlayer player = _players[playerId];
+            UiPlayer player = _players[playerId];
 
             if(action == EActionType.ActionCall || action == EActionType.ActionRaise || action == EActionType.ActionBlind)
             {
@@ -128,9 +104,9 @@ namespace HoldemController
         public void DisplayPlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
         {
         }
+
         public void DisplayShowdown(HandRanker handRanker, PotManager potMan)
         {
-
         }
 
         public void DisplayEndOfGame(int numPlayers, List<PlayerInfo> players)

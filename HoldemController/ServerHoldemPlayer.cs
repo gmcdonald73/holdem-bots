@@ -515,103 +515,111 @@ namespace HoldemController
                 {
                     playersAction = EActionType.ActionShow;
                 }
-
                 playersBetAmount = 0;
+                return;
             }
-            else
-            {
-                var bAllIn = false;
 
-                if (playersBetAmount < 0)
+            var bAllIn = false;
+            playersBetAmount = Math.Max(playersBetAmount, 0); // ensure bet is greater than zero
+
+            if (playersAction == EActionType.ActionRaise)
+            {
+                if (playersBetAmount > maxRaise)
                 {
-                    playersBetAmount = 0;
+                    playersBetAmount = maxRaise;
                 }
 
-                if (playersAction == EActionType.ActionRaise)
-                {
-/*
+                /*
                     // We shouldn't increase a players bet - but can reduce it if outside limits
                     if (playersBetAmount < minRaise)
                     {
                         playersBetAmount = minRaise;
                     }
-*/
-                    if (playersBetAmount > maxRaise)
+                */
+                if (playersBetAmount < minRaise) // if not enough to raise, then call
+                {
+                    if (playersBetAmount < callAmount) // if not enough to call, then fold
                     {
-                        playersBetAmount = maxRaise;
+                        playersBetAmount = 0;
+                        playersAction = EActionType.ActionFold;
+                    }
+                    else
+                    {
+                        playersBetAmount = callAmount;
+                        playersAction = EActionType.ActionCall;
                     }
                 }
+            }
+
+            if (playersBetAmount > StackSize)
+            {
+                playersBetAmount = StackSize;
+            }
+
+            if (playersBetAmount == StackSize)
+            {
+                bAllIn = true;
+            }
+
+            // -- Validate action - prevent player from doing anything illegal
+            if (playersAction != EActionType.ActionFold &&
+                playersAction != EActionType.ActionCheck &&
+                playersAction != EActionType.ActionCall &&
+                playersAction != EActionType.ActionRaise )
+            {
+                // invalid action - default to call
+                playersAction = EActionType.ActionCall;
+            }
+
+            //if (playersAction == EActionType.ActionFold && callAmount == 0)
+            //{
+            //    // invalid action - don't fold if they can check
+            //    playersAction = EActionType.ActionCheck;
+            //}
+
+            if (playersAction == EActionType.ActionCheck && callAmount > 0)
+            {
+                // invalid action - can't check so change to call
+                playersAction = EActionType.ActionCall;
+            }
+
+            if (playersAction == EActionType.ActionRaise && playersBetAmount <= callAmount)
+            {
+                // not enough chips to raise - just call
+                playersAction = EActionType.ActionCall;
+            }
+
+            if (playersAction == EActionType.ActionRaise && playersBetAmount > callAmount && playersBetAmount < minRaise && !bAllIn)
+            {
+                // not enough chips to raise - just call unless going allin
+                playersAction = EActionType.ActionCall;
+            }
+
+            if (playersAction == EActionType.ActionRaise && (raisesRemaining <= 0))
+            {
+                // no more raises allowed
+                playersAction = EActionType.ActionCall;
+            }
+
+            if (playersAction == EActionType.ActionCall && callAmount == 0)
+            {
+                // change call to check if callAmount = 0
+                playersAction = EActionType.ActionCheck;
+            }
+
+            // *** Fix betAmount
+            if (playersAction == EActionType.ActionFold || playersAction == EActionType.ActionCheck)
+            {
+                playersBetAmount = 0;
+            }
+
+            if (playersAction == EActionType.ActionCall)
+            {
+                playersBetAmount = callAmount;
 
                 if (playersBetAmount > StackSize)
                 {
                     playersBetAmount = StackSize;
-                }
-
-                if (playersBetAmount == StackSize)
-                {
-                    bAllIn = true;
-                }
-
-                // -- Validate action - prevent player from doing anything illegal
-                if (playersAction != EActionType.ActionFold &&
-                    playersAction != EActionType.ActionCheck &&
-                    playersAction != EActionType.ActionCall &&
-                    playersAction != EActionType.ActionRaise )
-                {
-                    // invalid action - default to call
-                    playersAction = EActionType.ActionCall;
-                }
-
-                if (playersAction == EActionType.ActionFold && callAmount == 0)
-                {
-                    // invalid action - don't fold if they can check
-                    playersAction = EActionType.ActionCheck;
-                }
-
-                if (playersAction == EActionType.ActionCheck && callAmount > 0)
-                {
-                    // invalid action - can't check so change to call
-                    playersAction = EActionType.ActionCall;
-                }
-
-                if (playersAction == EActionType.ActionRaise && playersBetAmount <= callAmount)
-                {
-                    // not enough chips to raise - just call
-                    playersAction = EActionType.ActionCall;
-                }
-
-                if (playersAction == EActionType.ActionRaise && playersBetAmount > callAmount && playersBetAmount < minRaise && !bAllIn)
-                {
-                    // not enough chips to raise - just call unless going allin
-                    playersAction = EActionType.ActionCall;
-                }
-
-                if (playersAction == EActionType.ActionRaise && (raisesRemaining <= 0))
-                {
-                    // no more raises allowed
-                    playersAction = EActionType.ActionCall;
-                }
-
-                if (playersAction == EActionType.ActionCall && callAmount == 0)
-                {
-                    // change call to check if callAmount = 0
-                    playersAction = EActionType.ActionCheck;
-                }
-
-                // *** Fix betAmount
-                if (playersAction == EActionType.ActionFold || playersAction == EActionType.ActionCheck)
-                {
-                    playersBetAmount = 0;
-                }
-
-                if (playersAction == EActionType.ActionCall)
-                {
-                    playersBetAmount = callAmount;
-
-                    if (playersBetAmount > StackSize)
-                    {
-                        playersBetAmount = StackSize;
-                    }
                 }
             }
         }
