@@ -30,7 +30,7 @@ namespace HoldemController
         private bool? _bIsObserver = null;
 
         // for launching GetAction in separate thread
-        private EActionType _playersAction;
+        private ActionType _playersAction;
         private int _playersBetAmount;
         private int _botTimeOutMilliSeconds;
         private Task _task;
@@ -132,7 +132,7 @@ namespace HoldemController
                 RunInitPlayer(pPlayerNum, gameConfig, playerConfigSettings);
             }
 
-            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, pPlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, Stage.StagePreflop, pPlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
 
             if (IsObserver)
             {
@@ -194,7 +194,7 @@ namespace HoldemController
                         RunGetName();
                     }
 
-                    TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, _sName));
+                    TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}", _handNum, Stage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, _sName));
 
                 }
 
@@ -253,7 +253,7 @@ namespace HoldemController
                         RunIsObserver();
                     }
 
-                    TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, _bIsObserver));
+                    TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}", _handNum, Stage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, _bIsObserver));
 
                 }
 
@@ -312,7 +312,7 @@ namespace HoldemController
                 RunInitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize);
             }
 
-            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, Stage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
 
         }
 
@@ -361,7 +361,7 @@ namespace HoldemController
                 RunReceiveHoleCards(hole1, hole2);
             }
 
-            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}", _handNum, EStage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, hole1, hole2));
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}", _handNum, Stage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, hole1, hole2));
 
         }
 
@@ -394,7 +394,7 @@ namespace HoldemController
             return _bIsBotBusy;
         }
 
-        public void SeeAction(EStage stage, int playerDoingAction, EActionType action, int amount)
+        public void SeeAction(Stage stage, int playerDoingAction, ActionType action, int amount)
         {
             if (_botTimeOutMilliSeconds > 0)
             {
@@ -426,7 +426,7 @@ namespace HoldemController
 
         }
 
-        private void RunSeeAction(EStage stage, int playerDoingAction, EActionType action, int amount)
+        private void RunSeeAction(Stage stage, int playerDoingAction, ActionType action, int amount)
         {
             try
             {
@@ -443,10 +443,10 @@ namespace HoldemController
         }
 
 
-        public void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType playersAction, out int playersBetAmount)
+        public void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType playersAction, out int playersBetAmount)
         {
             // Default to fold if exception or timeout
-            playersAction = EActionType.ActionFold;
+            playersAction = ActionType.Fold;
             playersBetAmount = 0;
 
             if (_botTimeOutMilliSeconds > 0)
@@ -488,7 +488,7 @@ namespace HoldemController
 
         }
 
-        private void RunGetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize)
+        private void RunGetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize)
         {
             try
             {
@@ -506,14 +506,14 @@ namespace HoldemController
         }
 
 
-        private void ValidateAction(EStage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, ref EActionType playersAction, ref int playersBetAmount)
+        private void ValidateAction(Stage stage, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, ref ActionType playersAction, ref int playersBetAmount)
         {
             // *** Fix up action
-            if(stage == EStage.StageShowdown)
+            if(stage == Stage.StageShowdown)
             {
-                if(playersAction != EActionType.ActionFold)
+                if(playersAction != ActionType.Fold)
                 {
-                    playersAction = EActionType.ActionShow;
+                    playersAction = ActionType.Show;
                 }
                 playersBetAmount = 0;
                 return;
@@ -522,7 +522,7 @@ namespace HoldemController
             var bAllIn = false;
             playersBetAmount = Math.Max(playersBetAmount, 0); // ensure bet is greater than zero
 
-            if (playersAction == EActionType.ActionRaise)
+            if (playersAction == ActionType.Raise)
             {
                 if (playersBetAmount > maxRaise)
                 {
@@ -541,12 +541,12 @@ namespace HoldemController
                     if (playersBetAmount < callAmount) // if not enough to call, then fold
                     {
                         playersBetAmount = 0;
-                        playersAction = EActionType.ActionFold;
+                        playersAction = ActionType.Fold;
                     }
                     else
                     {
                         playersBetAmount = callAmount;
-                        playersAction = EActionType.ActionCall;
+                        playersAction = ActionType.Call;
                     }
                 }
             }
@@ -562,13 +562,13 @@ namespace HoldemController
             }
 
             // -- Validate action - prevent player from doing anything illegal
-            if (playersAction != EActionType.ActionFold &&
-                playersAction != EActionType.ActionCheck &&
-                playersAction != EActionType.ActionCall &&
-                playersAction != EActionType.ActionRaise )
+            if (playersAction != ActionType.Fold &&
+                playersAction != ActionType.Check &&
+                playersAction != ActionType.Call &&
+                playersAction != ActionType.Raise )
             {
                 // invalid action - default to call
-                playersAction = EActionType.ActionCall;
+                playersAction = ActionType.Call;
             }
 
             //if (playersAction == EActionType.ActionFold && callAmount == 0)
@@ -577,43 +577,43 @@ namespace HoldemController
             //    playersAction = EActionType.ActionCheck;
             //}
 
-            if (playersAction == EActionType.ActionCheck && callAmount > 0)
+            if (playersAction == ActionType.Check && callAmount > 0)
             {
                 // invalid action - can't check so change to call
-                playersAction = EActionType.ActionCall;
+                playersAction = ActionType.Call;
             }
 
-            if (playersAction == EActionType.ActionRaise && playersBetAmount <= callAmount)
+            if (playersAction == ActionType.Raise && playersBetAmount <= callAmount)
             {
                 // not enough chips to raise - just call
-                playersAction = EActionType.ActionCall;
+                playersAction = ActionType.Call;
             }
 
-            if (playersAction == EActionType.ActionRaise && playersBetAmount > callAmount && playersBetAmount < minRaise && !bAllIn)
+            if (playersAction == ActionType.Raise && playersBetAmount > callAmount && playersBetAmount < minRaise && !bAllIn)
             {
                 // not enough chips to raise - just call unless going allin
-                playersAction = EActionType.ActionCall;
+                playersAction = ActionType.Call;
             }
 
-            if (playersAction == EActionType.ActionRaise && (raisesRemaining <= 0))
+            if (playersAction == ActionType.Raise && (raisesRemaining <= 0))
             {
                 // no more raises allowed
-                playersAction = EActionType.ActionCall;
+                playersAction = ActionType.Call;
             }
 
-            if (playersAction == EActionType.ActionCall && callAmount == 0)
+            if (playersAction == ActionType.Call && callAmount == 0)
             {
                 // change call to check if callAmount = 0
-                playersAction = EActionType.ActionCheck;
+                playersAction = ActionType.Check;
             }
 
             // *** Fix betAmount
-            if (playersAction == EActionType.ActionFold || playersAction == EActionType.ActionCheck)
+            if (playersAction == ActionType.Fold || playersAction == ActionType.Check)
             {
                 playersBetAmount = 0;
             }
 
-            if (playersAction == EActionType.ActionCall)
+            if (playersAction == ActionType.Call)
             {
                 playersBetAmount = callAmount;
 
@@ -652,14 +652,14 @@ namespace HoldemController
                 RunSeeBoardCard(cardType, boardCard);
             }
 
-            EStage stage = EStage.StageFlop;
+            Stage stage = Stage.StageFlop;
             if(cardType == EBoardCardType.BoardRiver)
             {
-                stage = EStage.StageRiver;
+                stage = Stage.StageRiver;
             }
             else if(cardType == EBoardCardType.BoardTurn)
             {
-                stage = EStage.StageTurn;
+                stage = Stage.StageTurn;
             }
             
             TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}", _handNum, stage, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, cardType, boardCard));
@@ -710,7 +710,7 @@ namespace HoldemController
                 RunSeePlayerHand(playerShowingHand, hole1, hole2, bestHand);
             }
 
-            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}, {7}", _handNum, EStage.StageShowdown, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, playerShowingHand, hole1, hole2));
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}, {5}, {6}, {7}", _handNum, Stage.StageShowdown, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond, playerShowingHand, hole1, hole2));
 
         }
 
@@ -759,7 +759,7 @@ namespace HoldemController
                 RunEndOfGame(numPlayers, players);
             }
 
-            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, EStage.StageShowdown, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
+            TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, Stage.StageShowdown, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
 
             // !!! should I be doing this here?
             if(_newDomain != null)

@@ -56,13 +56,6 @@
     <Compile Include="HandRankInfo.cs" />
     <Compile Include="IDisplay.cs" />
     <Compile Include="Logger.cs" />
-    <Compile Include="Player\HandAction.cs" />
-    <Compile Include="Player\HandState.cs" />
-    <Compile Include="Player\IHand.cs" />
-    <Compile Include="Player\PlayerHandState.cs" />
-    <Compile Include="Player\PokerAction.cs" />
-    <Compile Include="Player\PokerActionHistory.cs" />
-    <Compile Include="Player\PokerPlayer.cs" />
     <Compile Include="Pot.cs" />
     <Compile Include="PotManager.cs" />
     <Compile Include="Program.cs" />

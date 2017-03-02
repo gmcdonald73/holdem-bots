@@ -18,14 +18,14 @@ namespace CallerBot
             }
         }
 
-        public override void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType yourAction, out int amount)
         {
             // This is the bit where you need to put the AI (mostly likely based on info you receive in other methods)
 
-            if (stage == EStage.StageShowdown)
+            if (stage == Stage.StageShowdown)
             {
                 // if stage is the showdown then choose whether to show your hand or fold
-                yourAction = EActionType.ActionShow;
+                yourAction = ActionType.Show;
                 amount = 0;
             }
             else
@@ -36,7 +36,7 @@ namespace CallerBot
                 // amount only matters if you are raising (if calling the controller will use the correct amount). 
                 // If raising, minRaise and maxRaise are the total amount required to put into the pot (i.e. it includes the call amount)
                 // Side pots are now implemented so you can go all in and call or raise even if you have less than minimum
-                yourAction = EActionType.ActionCall;
+                yourAction = ActionType.Call;
                 amount = callAmount;
             }
         }

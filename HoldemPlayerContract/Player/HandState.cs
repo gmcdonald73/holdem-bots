@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using HoldemPlayerContract;
 
-namespace HoldemController.Player
+namespace HoldemPlayerContract.Player
 {
     public class HandState : IHand
     {
@@ -19,7 +18,7 @@ namespace HoldemController.Player
 
         public int SmallBlind { get; }
         public int BigBlind { get; }
-        public EStage Stage { get; private set; }
+        public Stage Stage { get; private set; }
         
         public Card[] CommunityCards => new Card[5];
         
@@ -28,7 +27,7 @@ namespace HoldemController.Player
             CommunityCards[(int)cardType] = card;
         }
 
-        public void SetAction(EStage stage, int playerId, EActionType action, int amount)
+        public void SetAction(Stage stage, int playerId, ActionType action, int amount)
         {
             CheckUpdateStage(stage);
 
@@ -40,28 +39,28 @@ namespace HoldemController.Player
 
             switch (action)
             {
-                case EActionType.ActionBlind:
-                case EActionType.ActionFold:
-                case EActionType.ActionCheck:
-                case EActionType.ActionCall:
-                case EActionType.ActionRaise:
+                case ActionType.Blind:
+                case ActionType.Fold:
+                case ActionType.Check:
+                case ActionType.Call:
+                case ActionType.Raise:
                     _actions.Add(new HandAction(player.Player, playerAction));
                     //player.SetAction(pAction);
                     break;
-                case EActionType.ActionShow:
+                case ActionType.Show:
                     break;
-                case EActionType.ActionWin:
+                case ActionType.Win:
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(action), action, null);
             }
         }
 
-        private void CheckUpdateStage(EStage stage)
+        private void CheckUpdateStage(Stage stage)
         {
             if (stage != Stage)
             {
-                if (stage != (Stage + 1) && stage != EStage.StageShowdown)
+                if (stage != (Stage + 1) && stage != Stage.StageShowdown)
                 {
                     throw new Exception($"Can not move from stage {Stage} to stage {stage}");
                 }

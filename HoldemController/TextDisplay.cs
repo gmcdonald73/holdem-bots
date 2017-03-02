@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using HoldemPlayerContract;
 
 namespace HoldemController
@@ -36,13 +32,13 @@ namespace HoldemController
             Logger.Log("Player {0} hole cards {1} {2}", playerId, hole1.ValueStr(), hole2.ValueStr());
         }
 
-        public void DisplayAction(EStage stage, int playerId, EActionType action, int totalAmount, int callAmount, int raiseAmount, bool isAllIn, PotManager potMan)
+        public void DisplayAction(Stage stage, int playerId, ActionType action, int totalAmount, int betSize, int callAmount, int raiseAmount, bool isAllIn, PotManager potMan)
         {
             string sLogMsg = "";
 
             sLogMsg += string.Format("Player {0} {1} {2}", playerId, action, totalAmount);
 
-            if (action == EActionType.ActionRaise)
+            if (action == ActionType.Raise)
             {
                 sLogMsg += string.Format(" ({0} call + {1} raise)", callAmount, raiseAmount);
             }

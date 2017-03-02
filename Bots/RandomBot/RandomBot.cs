@@ -28,17 +28,17 @@ namespace RandomBot
             }
         }
 
-        public override void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType yourAction, out int amount)
         {
-            yourAction = EActionType.ActionFold;
+            yourAction = ActionType.Fold;
             amount = 0;
 
             // This is the bit where you need to put the AI (mostly likely based on info you receive in other methods)
 
-            if (stage == EStage.StageShowdown)
+            if (stage == Stage.StageShowdown)
             {
                 // if stage is the showdown then choose whether to show your hand or fold
-                yourAction = EActionType.ActionShow;
+                yourAction = ActionType.Show;
                 amount = 0;
             }
             else
@@ -53,17 +53,17 @@ namespace RandomBot
 
                 if (actionNum < 20)
                 {
-                    yourAction = EActionType.ActionFold;
+                    yourAction = ActionType.Fold;
                     amount = 0;
                 }
                 else if (actionNum < 60)
                 {
-                    yourAction = EActionType.ActionCall;
+                    yourAction = ActionType.Call;
                     amount = callAmount;
                 }
                 else
                 {
-                    yourAction = EActionType.ActionRaise;
+                    yourAction = ActionType.Raise;
                     amount = minRaise;
                 }
             }

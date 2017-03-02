@@ -52,21 +52,21 @@ namespace ExceptionBot
             int i = 1 / zero;
         }
 
-        public override void SeeAction(EStage stage, int playerId, EActionType action, int amount)
+        public override void SeeAction(Stage stage, int playerId, ActionType action, int amount)
         {
             // this is called to inform you when any player (including yourself) makes an action (eg puts in blinds, checks, folds, calls, raises, or wins hand)
             int i = 1 / zero;
         }
 
-        public override void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType yourAction, out int amount)
         {
             // This is the bit where you need to put the AI (mostly likely based on info you receive in other methods)
             int i = 1 / zero;
 
-            if (stage == EStage.StageShowdown)
+            if (stage == Stage.StageShowdown)
             {
                 // if stage is the showdown then choose whether to show your hand or fold
-                yourAction = EActionType.ActionShow;
+                yourAction = ActionType.Show;
                 amount = 0;
             }
             else
@@ -78,7 +78,7 @@ namespace ExceptionBot
                 // If raising, minRaise and maxRaise are the total amount required to put into the pot (i.e. it includes the call amount)
                 // Side pots aren't implemented so if you run out of money you can still call (but not raise) and your stack size may go negative. 
                 // If your stack size is still 0 or negative at the end of the hand then you are out of the game.
-                yourAction = EActionType.ActionCall;
+                yourAction = ActionType.Call;
                 amount = callAmount;
             }
         }

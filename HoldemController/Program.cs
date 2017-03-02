@@ -18,12 +18,12 @@ namespace HoldemController
         private int _totalMoneyInGame;
 
         private int _dealerPlayerNum;
-        private int _littleBlindPlayerNum;
+        private int _smallBlindPlayerId;
         private int _bigBlindPlayerNum;
 
         // Game config - default values
         private int _numPlayers;
-        private int _littleBlindSize = 100;
+        private int _smallBlindSize = 100;
         private int _bigBlindSize = 200;
         private int _startingStack = 5000;
         private int _maxNumRaisesPerBettingRound = -1; 
@@ -83,8 +83,8 @@ namespace HoldemController
                 }
             }
 
-            _littleBlindPlayerNum = GetNextActivePlayer(_dealerPlayerNum);
-            _bigBlindPlayerNum = GetNextActivePlayer(_littleBlindPlayerNum);
+            _smallBlindPlayerId = GetNextActivePlayer(_dealerPlayerNum);
+            _bigBlindPlayerNum = GetNextActivePlayer(_smallBlindPlayerId);
 
             while (!bDone)
             {
@@ -99,7 +99,7 @@ namespace HoldemController
                 DealHoleCards();
 
                 // First betting round - get player actions and broadcast to all players until betting round done
-                DoBettingRound(EStage.StagePreflop, out lastToAct);
+                DoBettingRound(Stage.StagePreflop, out lastToAct);
 
                 if (GetNumActivePlayers() > 1)
                 {
@@ -116,7 +116,7 @@ namespace HoldemController
                     // Second betting round - get player actions and broadcast to all players until betting round done
                     if (IsBettingRoundRequired())
                     {
-                        DoBettingRound(EStage.StageFlop, out lastToAct);
+                        DoBettingRound(Stage.StageFlop, out lastToAct);
                     }
                 }
 
@@ -129,7 +129,7 @@ namespace HoldemController
                     // Third betting round - get player actions and broadcast to all players until betting round done
                     if (IsBettingRoundRequired())
                     {
-                        DoBettingRound(EStage.StageTurn, out lastToAct);
+                        DoBettingRound(Stage.StageTurn, out lastToAct);
                     }
                 }
 
@@ -142,7 +142,7 @@ namespace HoldemController
                     // Fourth betting round - get player actions and broadcast to all players until betting round done
                     if (IsBettingRoundRequired())
                     {
-                        DoBettingRound(EStage.StageRiver, out lastToAct);
+                        DoBettingRound(Stage.StageRiver, out lastToAct);
                     }
                 }
 
@@ -166,7 +166,7 @@ namespace HoldemController
                     var winningPlayer = _players.First(p => p.IsActive).PlayerNum;
 
                     _players[winningPlayer].StackSize += _potMan.Size();
-                    BroadcastAction(EStage.StageShowdown, winningPlayer, EActionType.ActionWin, _potMan.Size());
+                    BroadcastAction(Stage.StageShowdown, winningPlayer, ActionType.Win, _potMan.Size());
                     _potMan.EmptyPot();
                 }
 
@@ -228,7 +228,7 @@ namespace HoldemController
             Dictionary<string, string> gameConfigSettings = new Dictionary<string, string>();
 
             // add defaults to dictionary
-            gameConfigSettings.Add("littleBlind", _littleBlindSize.ToString());
+            gameConfigSettings.Add("littleBlind", _smallBlindSize.ToString());
             gameConfigSettings.Add("bigBlind", _bigBlindSize.ToString());
             gameConfigSettings.Add("startingStack", _startingStack.ToString());
             gameConfigSettings.Add("maxNumRaisesPerBettingRound", _maxNumRaisesPerBettingRound.ToString());
@@ -255,7 +255,7 @@ namespace HoldemController
             }
 
             // read values from dictionary
-            _littleBlindSize = Convert.ToInt32(gameConfigSettings["littleBlind"]);
+            _smallBlindSize = Convert.ToInt32(gameConfigSettings["littleBlind"]);
             _bigBlindSize = Convert.ToInt32(gameConfigSettings["bigBlind"]);
             _startingStack = Convert.ToInt32(gameConfigSettings["startingStack"]);
             _maxNumRaisesPerBettingRound = Convert.ToInt32(gameConfigSettings["maxNumRaisesPerBettingRound"]);
@@ -279,7 +279,7 @@ namespace HoldemController
             _displays.Add(textDisplay);
 
             GameConfig gameConfig = new GameConfig();
-            gameConfig.LittleBlindSize = _littleBlindSize;
+            gameConfig.LittleBlindSize = _smallBlindSize;
             gameConfig.BigBlindSize = _bigBlindSize;
             gameConfig.StartingStack = _startingStack;
             gameConfig.MaxNumRaisesPerBettingRound = _maxNumRaisesPerBettingRound;
@@ -398,7 +398,7 @@ namespace HoldemController
             // Double the blinds if required. Do this here because later on we may want to include this in info to players
             if (_doubleBlindFrequency > 0 && handNum % _doubleBlindFrequency == 0)
             {
-                _littleBlindSize *= 2;
+                _smallBlindSize *= 2;
                 _bigBlindSize *= 2;
             }
             
@@ -414,12 +414,12 @@ namespace HoldemController
             // broadcast player info to all players
             foreach (var player in _allBots)
             {
-                player.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _littleBlindSize, _bigBlindSize);
+                player.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _smallBlindSize, _bigBlindSize);
             }
 
             foreach(IDisplay d in _displays)
             {
-                d.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _littleBlindSize, _bigBlindSize);
+                d.InitHand(handNum, playerInfoList.Count, playerInfoList, _dealerPlayerNum, _smallBlindSize, _bigBlindSize);
             }
 
             // shuffle deck
@@ -449,30 +449,33 @@ namespace HoldemController
             }
         }
 
-        private void TakeBlinds()
+        private void TakeBlinds(Dictionary<int, int> roundBets)
         {
             // take blinds - inform all players of blinds
-            int bigBlindBet;
 
-            // little blind might not be live (if big blind was eliminated last hand)
-            if (_players[_littleBlindPlayerNum].IsAlive)
+            // small blind might not be live (if big blind was eliminated last hand)
+            var smallBlindPlayer = _players[_smallBlindPlayerId];
+            if (smallBlindPlayer.IsAlive)
             {
                 // check player has enough chips - if not go all in
-                var littleBlindBet = _littleBlindSize > _players[_littleBlindPlayerNum].StackSize
-                                         ? _players[_littleBlindPlayerNum].StackSize
-                                         : _littleBlindSize;
+                var smallBlindBet = _smallBlindSize > smallBlindPlayer.StackSize
+                                         ? smallBlindPlayer.StackSize
+                                         : _smallBlindSize;
 
-                TransferMoneyToPot(_littleBlindPlayerNum, littleBlindBet);
-                BroadcastAction(EStage.StagePreflop, _littleBlindPlayerNum, EActionType.ActionBlind, littleBlindBet);
+                TransferMoneyToPot(_smallBlindPlayerId, smallBlindBet);
+                roundBets[_smallBlindPlayerId] += smallBlindBet;
+                BroadcastAction(Stage.StagePreflop, _smallBlindPlayerId, ActionType.Blind, smallBlindBet, smallBlindBet);
             }
 
             // check player has enough chips - if not go all in
-            bigBlindBet = _bigBlindSize > _players[_bigBlindPlayerNum].StackSize
-                              ? _players[_bigBlindPlayerNum].StackSize
-                              : _bigBlindSize;
+            var bigBlindPlayer = _players[_bigBlindPlayerNum];
+            var bigBlindBet = _bigBlindSize > bigBlindPlayer.StackSize
+                ? bigBlindPlayer.StackSize
+                : _bigBlindSize;
 
             TransferMoneyToPot(_bigBlindPlayerNum, bigBlindBet);
-            BroadcastAction(EStage.StagePreflop, _bigBlindPlayerNum, EActionType.ActionBlind, bigBlindBet);
+            roundBets[_bigBlindPlayerNum] += bigBlindBet;
+            BroadcastAction(Stage.StagePreflop, _bigBlindPlayerNum, ActionType.Blind, bigBlindBet, bigBlindBet);
         }
 
         private void DealHoleCards()
@@ -505,24 +508,19 @@ namespace HoldemController
         }
 
         // broadcast action of a player to all players (including themselves)
-        private void BroadcastAction(EStage stage, int playerNumDoingAction, EActionType action, int amount, int callAmount = 0)
+        private void BroadcastAction(Stage stage, int playerId, ActionType action, int amount, int betSize = 0, int callAmount = 0)
         {
-            int raiseAmount = amount - callAmount;
-            bool isAllIn = false;
-
-            if (_players[playerNumDoingAction].StackSize <= 0)
-            {
-                isAllIn = true;
-            }
+            var raiseAmount = amount - callAmount;
+            var isAllIn = _players[playerId].StackSize <= 0;
 
             foreach (var player in _allBots)
             {
-                player.SeeAction(stage, playerNumDoingAction, action, amount);
+                player.SeeAction(stage, playerId, action, amount);
             }
 
             foreach(IDisplay d in _displays)
             {
-                d.DisplayAction(stage, playerNumDoingAction, action, amount, callAmount, raiseAmount, isAllIn, _potMan);
+                d.DisplayAction(stage, playerId, action, amount, betSize, callAmount, raiseAmount, isAllIn, _potMan);
             }
         }
 
@@ -550,7 +548,7 @@ namespace HoldemController
             return numActivePlayersWithChips > 1;
         }
 
-        private void DoBettingRound(EStage stage, out int lastToAct)
+        private void DoBettingRound(Stage stage, out int lastToAct)
         {
             var bDone = false;
             var raisesRemaining = _maxNumRaisesPerBettingRound < 0 ? 999 : _maxNumRaisesPerBettingRound;
@@ -560,9 +558,10 @@ namespace HoldemController
             var lastFullPureRaise = _bigBlindSize;
             int callLevel;
 
-            if (stage == EStage.StagePreflop)
+            var roundBets = _players.ToDictionary(p => p.PlayerNum, p => 0);
+            if (stage == Stage.StagePreflop)
             {
-                TakeBlinds();
+                TakeBlinds(roundBets);
                 firstBettorPlayerNum = GetNextActivePlayer(_bigBlindPlayerNum);
                 callLevel = _bigBlindSize; //set this explicitly in case the big blind is short
             }
@@ -587,22 +586,23 @@ namespace HoldemController
                     CalcRequiredBetAmounts(currBettor, callLevel, lastFullPureRaise, out callAmount, out minRaise, out maxRaise);
 
                     // get the players action
-                    EActionType playersAction;
+                    ActionType playersAction;
                     int playersBetAmount;
                     player.GetAction(stage, callLevel, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
 
                     // *** DO ACTION ***
-                    if (playersAction == EActionType.ActionFold)
+                    if (playersAction == ActionType.Fold)
                     {
                         // if fold then mark player as inactive
                         player.IsActive = false;
                     }
-                    else if ((playersAction == EActionType.ActionCall) || (playersAction == EActionType.ActionRaise))
+                    else if ((playersAction == ActionType.Call) || (playersAction == ActionType.Raise))
                     {
                         // if call or raise the take $ from players stack and put in pot
                         TransferMoneyToPot(currBettor, playersBetAmount);
+                        roundBets[player.PlayerNum] += playersBetAmount;
 
-						if (playersAction == EActionType.ActionRaise)
+                        if (playersAction == ActionType.Raise)
 						{
                             // if raise then update lastToAct to the preceding active player
                             lastToAct = GetPrevActivePlayer(currBettor);
@@ -624,7 +624,7 @@ namespace HoldemController
 						}
                     }
 
-                    BroadcastAction(stage, currBettor, playersAction, playersBetAmount, callAmount);
+                    BroadcastAction(stage, currBettor, playersAction, playersBetAmount, roundBets[player.PlayerNum], callAmount);
                 }
 
                 // if this player is last to act or only one active player left then bDone = true
@@ -716,22 +716,21 @@ namespace HoldemController
             return -1;
         }
 
-        private void TransferMoneyToPot(int playerNum, int amount)
+        private void TransferMoneyToPot(int playerId, int amount)
         {
-            bool isAllIn;
-
-            if (amount > _players[playerNum].StackSize)
+            var player = _players[playerId];
+            if (amount > player.StackSize)
             {
                 throw new Exception("insufficient chips");
             }
 
             if (amount > 0)
             {
-                _players[playerNum].StackSize -= amount;
+                player.StackSize -= amount;
 
-                isAllIn = _players[playerNum].StackSize == 0;
+                var isAllIn = player.StackSize == 0;
 
-                _potMan.AddPlayersBet(playerNum, amount, isAllIn);
+                _potMan.AddPlayersBet(playerId, amount, isAllIn);
 
                 ReconcileCash();
             }
@@ -775,7 +774,7 @@ namespace HoldemController
             do
             {
                 var player = _players[currPlayer];
-                EActionType playersAction;
+                ActionType playersAction;
                 int playersAmount;
 
                 // if not first to act then player may fold without showing cards (unless all in)
@@ -783,17 +782,17 @@ namespace HoldemController
                 var potsInvolvedIn = _potMan.GetPotsInvolvedIn(currPlayer);
                 if (player.StackSize > 0 && (uncontestedPots.Intersect(potsInvolvedIn).Count() == 0))
                 {
-                    player.GetAction(EStage.StageShowdown, 0, 0, 0, 0, 0, _potMan.Size(), out playersAction, out playersAmount);
+                    player.GetAction(Stage.StageShowdown, 0, 0, 0, 0, 0, _potMan.Size(), out playersAction, out playersAmount);
                 }
                 else
                 {
-                    playersAction = EActionType.ActionShow;
+                    playersAction = ActionType.Show;
                 }
 
-                if (playersAction == EActionType.ActionFold)
+                if (playersAction == ActionType.Fold)
                 {
                     _players[currPlayer].IsActive = false;
-                    BroadcastAction(EStage.StageShowdown, currPlayer, playersAction, 0);
+                    BroadcastAction(Stage.StageShowdown, currPlayer, playersAction, 0);
                 }
                 else
                 {
@@ -842,7 +841,7 @@ namespace HoldemController
                             potRemaining -= shareOfWinnings;
                         }
 
-                        // if remainder left in pot then allocate 1 chip at a time starting at player in worst position (closest to little blind)
+                        // if remainder left in pot then allocate 1 chip at a time starting at player in worst position (closest to small blind)
                         var currPlayer = _dealerPlayerNum;
 
                         while (potRemaining > 0)
@@ -862,7 +861,7 @@ namespace HoldemController
                         foreach (var pair in amountWon)
                         {
                             _players[pair.Key].StackSize += pair.Value;
-                            BroadcastAction(EStage.StageShowdown, pair.Key, EActionType.ActionWin, pair.Value);
+                            BroadcastAction(Stage.StageShowdown, pair.Key, ActionType.Win, pair.Value);
                         }
 
                         break;
@@ -891,8 +890,8 @@ namespace HoldemController
 
         private void MoveDealerAndBlinds()
         {
-            _dealerPlayerNum = _littleBlindPlayerNum; // note that this player might not be live if just eliminated
-            _littleBlindPlayerNum = _bigBlindPlayerNum; // note that this player might not be live if just eliminated
+            _dealerPlayerNum = _smallBlindPlayerId; // note that this player might not be live if just eliminated
+            _smallBlindPlayerId = _bigBlindPlayerNum; // note that this player might not be live if just eliminated
             _bigBlindPlayerNum = GetNextLivePlayer(_bigBlindPlayerNum);
         }
     }

@@ -1,7 +1,7 @@
 <HoldemConfig>
-  <GameRules littleBlind="125" 
-             bigBlind="250" 
-             startingStack="100000"
+  <GameRules littleBlind="1" 
+             bigBlind="2" 
+             startingStack="200"
              maxNumRaisesPerBettingRound="-1"
              maxHands="-1"
              doubleBlindFrequency="19" 

@@ -66,21 +66,21 @@ namespace HoldemController.ConsoleDisplay
             }
         }
 
-        public void DisplayAction(EStage stage, int playerId, EActionType action, int totalAmount, int callAmount, int raiseAmount, bool isAllIn, PotManager potMan)
+        public void DisplayAction(Stage stage, int playerId, ActionType action, int totalAmount, int betSize, int callAmount, int raiseAmount, bool isAllIn, PotManager potMan)
         {
             UiPlayer player = _players[playerId];
 
-            if(action == EActionType.ActionCall || action == EActionType.ActionRaise || action == EActionType.ActionBlind)
+            if(action == ActionType.Call || action == ActionType.Raise || action == ActionType.Blind)
             {
                 player.StackSize -= totalAmount;
             }
-            else if(action == EActionType.ActionWin)
+            else if(action == ActionType.Win)
             {
                 player.StackSize += totalAmount;
             }
 
             _display.UpdatePlayer(player);
-            _display.UpdatePlayerAction(player.IsAlive, playerId, action, totalAmount);
+            _display.UpdatePlayerAction(player.IsAlive, playerId, action, betSize);
             _display.UpdatePots(potMan.Pots);
 
             if(_sleepAfterActionMilliSeconds > 0)

@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using HoldemPlayerContract;
 
-namespace HoldemController.Player
+namespace HoldemPlayerContract.Player
 {
     public abstract class PokerPlayer : MarshalByRefObject, IHoldemPlayer
     {
@@ -39,12 +38,12 @@ namespace HoldemController.Player
             _playerPosition.SetCards(hole1, hole2);
         }
 
-        public void SeeAction(EStage stage, int playerId, EActionType action, int amount)
+        public void SeeAction(Stage stage, int playerId, ActionType action, int amount)
         {
             _hand.SetAction(stage, playerId, action, amount);
         }
 
-        public void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType action, out int amount)
+        public void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType action, out int amount)
         {
             // todo: not sure if any of this will be good info to pass through. perhaps callAmount, minRaise, maxRaise, raisesRemaing, potSize?
             // potsize shoudl be in the handState
@@ -61,7 +60,7 @@ namespace HoldemController.Player
             _hand.SetCommunityCard(communityCard, cardType);
         }
 
-        public void SeePlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
+        public virtual void SeePlayerHand(int playerNum, Card hole1, Card hole2, Hand bestHand)
         {
         }
 

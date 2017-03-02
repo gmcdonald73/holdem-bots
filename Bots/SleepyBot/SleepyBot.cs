@@ -46,19 +46,19 @@ namespace SleepyBot
             System.Threading.Thread.Sleep(_sleepMilliSeconds);
         }
 
-        public override void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
+        public override void SeeAction(Stage stage, int playerNum, ActionType action, int amount)
         {
             // this is called to inform you when any player (including yourself) makes an action (eg puts in blinds, checks, folds, calls, raises, or wins hand)
             System.Threading.Thread.Sleep(_sleepMilliSeconds);
         }
 
-        public override void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType yourAction, out int amount)
         {
             // This is the bit where you need to put the AI (mostly likely based on info you receive in other methods)
 
             System.Threading.Thread.Sleep(_sleepMilliSeconds);
 
-            yourAction = EActionType.ActionCall;
+            yourAction = ActionType.Call;
             amount = callAmount;
         }
 

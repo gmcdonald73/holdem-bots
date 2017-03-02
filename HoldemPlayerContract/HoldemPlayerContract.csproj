@@ -46,17 +46,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseBot.cs" />
-    <Compile Include="EActionType.cs" />
+    <Compile Include="ActionType.cs" />
     <Compile Include="EBoardCardType.cs" />
     <Compile Include="EHandType.cs" />
     <Compile Include="ERankType.cs" />
-    <Compile Include="EStage.cs" />
+    <Compile Include="Stage.cs" />
     <Compile Include="ESuitType.cs" />
     <Compile Include="GameConfig.cs" />
     <Compile Include="Hand.cs" />
     <Compile Include="Card.cs" />
     <Compile Include="IHoldemPlayer.cs" />
     <Compile Include="PlayerInfo.cs" />
+    <Compile Include="Player\HandAction.cs" />
+    <Compile Include="Player\HandState.cs" />
+    <Compile Include="Player\IHand.cs" />
+    <Compile Include="Player\PlayerHandState.cs" />
+    <Compile Include="Player\PokerAction.cs" />
+    <Compile Include="Player\PokerActionHistory.cs" />
+    <Compile Include="Player\PokerPlayer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

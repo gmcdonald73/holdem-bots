@@ -104,28 +104,28 @@ namespace ObserverBot
             _tw.WriteLine(sStackSizes);
         }
 
-        public override void SeeAction(EStage stage, int playerNum, EActionType action, int amount)
+        public override void SeeAction(Stage stage, int playerNum, ActionType action, int amount)
         {
             // this is called to inform you when any player (including yourself) makes an action (eg puts in blinds, checks, folds, calls, raises, or wins hand)
-            if (action == EActionType.ActionFold)
+            if (action == ActionType.Fold)
             {
                 switch (stage)
                 {
-                    case EStage.StagePreflop:
+                    case Stage.StagePreflop:
                         playerStats[playerNum].NumPreFlopsFolded++;
                         break;
-                    case EStage.StageFlop:
+                    case Stage.StageFlop:
                         playerStats[playerNum].NumFlopsFolded++;
                         break;
-                    case EStage.StageTurn:
+                    case Stage.StageTurn:
                         playerStats[playerNum].NumTurnsFolded++;
                         break;
-                    case EStage.StageRiver:
+                    case Stage.StageRiver:
                         playerStats[playerNum].NumRiversFolded++;
                         break;
                 }
             }
-            else if (action == EActionType.ActionWin)
+            else if (action == ActionType.Win)
             {
                 // be careful not to double count here. This can be call multiple times for the same player for the same hand if they win more than one side pot
                 if(!playerStats[playerNum].bWonThisHand)

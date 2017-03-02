@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using HoldemPlayerContract;
 
-namespace HoldemController.Player
+namespace HoldemPlayerContract.Player
 {
     public class PlayerHandState : IPlayerHandState
     {
-        private EStage _currentStage;
+        private Stage _currentStage;
 
         public PlayerHandState(PlayerInfo playerInfo)
         {
@@ -39,17 +38,17 @@ namespace HoldemController.Player
             StageActions.Add(action);
             switch (action.Action)
             {
-                case EActionType.ActionBlind:
-                case EActionType.ActionCall:
-                case EActionType.ActionRaise:
+                case ActionType.Blind:
+                case ActionType.Call:
+                case ActionType.Raise:
                     TotalStageBet += action.Amount;
                     break;
             }
         }
 
-        public void UpdateStage(EStage stage)
+        public void UpdateStage(Stage stage)
         {
-            if (_currentStage != stage - 1 && stage != EStage.StageShowdown)
+            if (_currentStage != stage - 1 && stage != Stage.StageShowdown)
             {
                 throw new Exception($"Can not move from stage {_currentStage} to stage {stage}");
             }

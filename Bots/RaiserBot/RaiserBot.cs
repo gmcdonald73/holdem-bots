@@ -35,17 +35,17 @@ namespace RaiserBot
             _numRaisesThisStage = 0;
         }
 
-        public override void GetAction(EStage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out EActionType yourAction, out int amount)
+        public override void GetAction(Stage stage, int betSize, int callAmount, int minRaise, int maxRaise, int raisesRemaining, int potSize, out ActionType yourAction, out int amount)
         {
             if((_maxRaisesPerStage == -1) || (_numRaisesThisStage < _maxRaisesPerStage))
             {
-                yourAction = EActionType.ActionRaise;
+                yourAction = ActionType.Raise;
                 amount = minRaise;
                 _numRaisesThisStage++;
             }
             else
             {
-                yourAction = EActionType.ActionCall;
+                yourAction = ActionType.Call;
                 amount = callAmount;
             }
         }

@@ -1,6 +1,6 @@
 namespace HoldemPlayerContract
 {
-    public enum EStage
+    public enum Stage
     {
         StagePreflop,
         StageFlop,

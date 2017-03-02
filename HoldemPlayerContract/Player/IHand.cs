@@ -1,10 +1,8 @@
-﻿using HoldemPlayerContract;
-
-namespace HoldemController.Player
+﻿namespace HoldemPlayerContract.Player
 {
     public interface IHand
     {
-        EStage Stage { get; }
+        Stage Stage { get; }
         Card[] CommunityCards { get; }
 
         int SmallBlind { get; }

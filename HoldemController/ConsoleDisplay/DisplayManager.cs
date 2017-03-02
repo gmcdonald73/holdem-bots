@@ -92,32 +92,33 @@ namespace HoldemController.ConsoleDisplay
 
         internal void UpdatePots(List<Pot> pots)
         {
+            var potWidth = 20;
             var x = _width / 2 - 30;
             var y = _height / 2 - 1;
             var potDisplay = new List<ConsoleLine>();
             var potNum = 1;
             foreach (var pot in pots)
             {
-                potDisplay.Add(new ConsoleLine(x, y, "Pot " + potNum + ": " + pot.Size(), ConsoleColor.White, ConsoleColor.DarkGreen));
+                potDisplay.Add(new ConsoleLine(x, y, ("Pot " + potNum + ": " + pot.Size()).PadRight(potWidth), ConsoleColor.White, ConsoleColor.DarkGreen));
                 potNum++;
                 y++;
             }
             for (var i = 0; i < 4 - pots.Count; i++)
             {
-                potDisplay.Add(new ConsoleLine(x, y, "                ", ConsoleColor.White, ConsoleColor.DarkGreen));
+                potDisplay.Add(new ConsoleLine(x, y, new string(' ', potWidth), ConsoleColor.White, ConsoleColor.DarkGreen));
                 potNum++;
                 y++;
             }
             DrawLines(potDisplay);
         }
 
-        public void UpdatePlayerAction(bool isAlive, int playerNum, EActionType act, int amount)
+        public void UpdatePlayerAction(bool isAlive, int playerNum, ActionType act, int amount)
         {
             var pos = _playerPositions[playerNum];
             var x = pos.X;
             var y = pos.Y;
-            var action = act.ToString().Replace("Action", "") + "  ";
-            var bet = (((IList) new[] {EActionType.ActionBlind, EActionType.ActionCall, EActionType.ActionRaise}).Contains(act) ? amount.ToString() : string.Empty) + "    ";
+            var action = act.ToString().PadRight(10);
+            var bet = (((IList) new[] {ActionType.Blind, ActionType.Call, ActionType.Raise}).Contains(act) ? amount.ToString() : string.Empty) + "    ";
             ConsoleLine playerAction;
             ConsoleLine betAmount;
             switch (pos.Type)
@@ -149,7 +150,7 @@ namespace HoldemController.ConsoleDisplay
             var pos = _playerPositions[player.PlayerNum];
             var x = pos.X;
             var y = pos.Y;
-            var stack = player.StackSize + "     ";
+            var stack = player.StackSize.ToString().PadRight(20);
             ConsoleLine playerName;
             ConsoleLine stackSize;
             var holeCards = player.HoleCards;

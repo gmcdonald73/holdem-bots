@@ -1,6 +1,4 @@
-﻿using HoldemPlayerContract;
-
-namespace HoldemController.Player
+﻿namespace HoldemPlayerContract.Player
 {
     public class HandAction
     {
