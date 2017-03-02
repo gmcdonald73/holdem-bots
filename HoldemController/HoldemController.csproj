@@ -48,6 +48,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConsoleDisplay\ConsoleLine.cs" />
+    <Compile Include="ConsoleDisplay\DrawRegion.cs" />
     <Compile Include="ConsoleDisplay\UiPlayer.cs" />
     <Compile Include="Deck.cs" />
     <Compile Include="ConsoleDisplay\DisplayManager.cs" />

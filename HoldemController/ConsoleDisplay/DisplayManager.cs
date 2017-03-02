@@ -9,89 +9,40 @@ namespace HoldemController.ConsoleDisplay
     {
         private readonly int _width;
         private readonly int _height;
-        private readonly int _numPlayers;
-
-        private int _boardHeight;
-        private int _minBoardWidth;
-        private int _maxBoardWidth;
+        private readonly DrawRegion _regions;
         
-        private List<PlayerPosition> _availablePositions;
-        private Dictionary<int, PlayerPosition> _playerPositions;
-
-        public class PlayerPosition
-        {
-            public int X { get; set; }
-            public int Y { get; set; }
-
-            public PositionType Type { get; set; }
-        }
-
-        public enum PositionType
-        {
-            Top,
-            Right,
-            Bottom,
-            Left
-        }
-
         internal DisplayManager(int width, int height, int numPlayers)
         {
             Console.SetWindowSize(width, height);
             Console.OutputEncoding = System.Text.Encoding.Unicode;
+
+            _regions = new DrawRegion(width, height, numPlayers);
+
             _width = width;
             _height = height;
-            _numPlayers = numPlayers;
-
-            if (_numPlayers > 8)
-            {
-                throw new ArgumentOutOfRangeException(nameof(numPlayers));
-            }
         }
 
         public void DrawTable()
         {
-            DrawLines(PokerTable(), ConsoleColor.DarkGreen);
-            BuildAvailablePositions();
-            AssignPlayerPositions();
-        }
-
-        private void BuildAvailablePositions()
-        {
-            var midPointX = _width / 2;
-            var yPos = (_height - _boardHeight) / 2 / 4;
-            _availablePositions = new List<PlayerPosition>
+            var table = _regions.Table;
+            var lines = new List<ConsoleLine>();
+            for (var i = 0; i < table.Height; i++)
             {
-                new PlayerPosition {X = (int) (midPointX - _minBoardWidth*.35), Y = yPos, Type = PositionType.Top},
-                new PlayerPosition {X = midPointX - 5, Y = yPos, Type = PositionType.Top},
-                new PlayerPosition {X = (int) (midPointX + _minBoardWidth*.25), Y = yPos, Type = PositionType.Top},
-                new PlayerPosition {X = _maxBoardWidth + (_width - _maxBoardWidth)/8, Y = _height/2 - (_height - _boardHeight)/4, Type = PositionType.Right},
-                new PlayerPosition {X = (int) (midPointX + _minBoardWidth*.25), Y = _boardHeight, Type = PositionType.Bottom},
-                new PlayerPosition {X = midPointX - 5, Y = _boardHeight, Type = PositionType.Bottom},
-                new PlayerPosition {X = (int) (midPointX - _minBoardWidth*.35), Y = _boardHeight, Type = PositionType.Bottom},
-                new PlayerPosition {X = (_width - _maxBoardWidth)/4, Y = _height/2 - (_height - _boardHeight)/4, Type = PositionType.Left}
-            };
-        }
-
-        private void AssignPlayerPositions()
-        {
-            _playerPositions = new Dictionary<int, PlayerPosition>();
-
-            for(int i=0; i<_numPlayers; i++)
-            {
-                _playerPositions.Add(i, _availablePositions[i]);
-//                _playerPositions = _players.ToDictionary(s => s.PlayerNum, s => _availablePositions[s.PlayerNum]);
+                lines.Add(new ConsoleLine(table.X, table.Y + i, new string(' ', table.Width)));
             }
+            DrawLines(lines, ConsoleColor.DarkGreen);
         }
 
         public void UpdateCommunityCards(Card[] cards)
         {
-            var startingX = _width / 2 - 9;
-            var startingY = _height / 2 - 1;
-            DrawLines(BuildCards(cards, startingX, startingY, true));
+            var region = _regions.CommunityCards;
+            DrawLines(BuildCards(cards, region.X, region.Y, true));
         }
 
-        internal void UpdatePots(List<Pot> pots)
+        internal void UpdatePots(List<Pot> pots) 
         {
+            // todo: needs updating using the Region stuffs
+
             var potWidth = 20;
             var x = _width / 2 - 30;
             var y = _height / 2 - 1;
@@ -112,76 +63,58 @@ namespace HoldemController.ConsoleDisplay
             DrawLines(potDisplay);
         }
 
-        public void UpdatePlayerAction(bool isAlive, int playerNum, ActionType act, int amount)
+        public void UpdatePlayerAction(bool isAlive, int playerId, ActionType act, int amount)
         {
-            var pos = _playerPositions[playerNum];
-            var x = pos.X;
-            var y = pos.Y;
-            var action = act.ToString().PadRight(10);
-            var bet = (((IList) new[] {ActionType.Blind, ActionType.Call, ActionType.Raise}).Contains(act) ? amount.ToString() : string.Empty) + "    ";
-            ConsoleLine playerAction;
-            ConsoleLine betAmount;
-            switch (pos.Type)
+            var actionRegion = _regions.PlayerAction[playerId];
+
+            var consoleColor = ConsoleColor.Green;
+            switch (act)
             {
-                case PositionType.Top:
-                    playerAction = new ConsoleLine(x, y + 2, action);
-                    betAmount = new ConsoleLine(x, y + 3, bet, ConsoleColor.Green);
+                case ActionType.Check:
+                case ActionType.Blind:
+                case ActionType.Call:
+                    consoleColor = ConsoleColor.Cyan;
                     break;
-                case PositionType.Right:
-                    playerAction = new ConsoleLine(x + 15, y + 2, action);
-                    betAmount = new ConsoleLine(x + 15, y + 3, bet, ConsoleColor.Green);
+                case ActionType.Raise:
+                    consoleColor = ConsoleColor.Yellow;
                     break;
-                case PositionType.Bottom:
-                    playerAction = new ConsoleLine(x, y + 6, action);
-                    betAmount = new ConsoleLine(x, y + 5, bet, ConsoleColor.Green);
+                case ActionType.Fold:
+                    consoleColor = ConsoleColor.Black;
                     break;
-                case PositionType.Left:
-                    playerAction = new ConsoleLine(x, y + 2, action);
-                    betAmount = new ConsoleLine(x, y + 3, bet, ConsoleColor.Green);
+                case ActionType.Show:
                     break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                case ActionType.Win:
+                    consoleColor = ConsoleColor.Blue;
+                    break;
             }
-            DrawLines(new List<ConsoleLine> { playerAction, betAmount }, ConsoleColor.Black, isAlive ? ConsoleColor.Cyan : ConsoleColor.Red);
+
+            var playerAction = new ConsoleLine(actionRegion.X, actionRegion.Y, actionRegion.FormatText(act.ToString()), consoleColor);
+
+            var bet = actionRegion.FormatText(((IList) new[] {ActionType.Blind, ActionType.Call, ActionType.Raise, ActionType.Win}).Contains(act) ? amount.ToString() : string.Empty);
+            var betAmount = new ConsoleLine(actionRegion.X, actionRegion.Y + 1, bet, ConsoleColor.White);
+            DrawLines(new List<ConsoleLine> {playerAction, betAmount}, ConsoleColor.DarkGreen);
+
+            if (act == ActionType.Fold)
+            {
+                UpdateHoleCards(playerId, new Card[2], false);
+            }
         }
 
         internal void UpdatePlayer(UiPlayer player)
         {
-            var pos = _playerPositions[player.PlayerNum];
-            var x = pos.X;
-            var y = pos.Y;
-            var stack = player.StackSize.ToString().PadRight(20);
-            ConsoleLine playerName;
-            ConsoleLine stackSize;
-            var holeCards = player.HoleCards;
-            List<ConsoleLine> cards;
+            var playerId = player.PlayerNum;
+            var playerRegion = _regions.Players[playerId];
+            var name = new ConsoleLine(playerRegion.X, playerRegion.Y, playerRegion.FormatText(player.Name));
+            var stackSize = new ConsoleLine(playerRegion.X, playerRegion.Y + 1, playerRegion.FormatText(player.StackSize.ToString()));
+            DrawLines(new List<ConsoleLine> {name, stackSize}, ConsoleColor.Black, ConsoleColor.White);
             
-            switch (pos.Type)
-            {
-                case PositionType.Top:
-                    playerName = new ConsoleLine(x, y, player.Name);
-                    stackSize = new ConsoleLine(x, y + 1, stack);
-                    cards = BuildCards(holeCards, x, y + 5, player.IsAlive);
-                    break;
-                case PositionType.Right:
-                    playerName = new ConsoleLine(x + 15, y, player.Name);
-                    stackSize = new ConsoleLine(x + 15, y + 1, stack);
-                    cards = BuildCards(holeCards, x, y, player.IsAlive);
-                    break;
-                case PositionType.Bottom:
-                    playerName = new ConsoleLine(x, y + 7, player.Name);
-                    stackSize = new ConsoleLine(x, y + 8, stack);
-                    cards = BuildCards(holeCards, x, y, player.IsAlive);
-                    break;
-                case PositionType.Left:
-                    playerName = new ConsoleLine(x, y, player.Name);
-                    stackSize = new ConsoleLine(x, y + 1, stack);
-                    cards = BuildCards(holeCards, x + 12, y, player.IsAlive);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-            DrawLines(new List<ConsoleLine> { playerName, stackSize }, ConsoleColor.Black, ConsoleColor.White);
+            UpdateHoleCards(playerId, player.HoleCards, player.IsAlive);
+        }
+
+        private void UpdateHoleCards(int playerId, Card[] holeCards, bool isAlive)
+        {
+            var cardRegion = _regions.PlayerCards[playerId];
+            var cards = BuildCards(holeCards, cardRegion.X, cardRegion.Y, isAlive);
             DrawLines(cards, ConsoleColor.White, ConsoleColor.Black);
         }
 
@@ -204,7 +137,6 @@ namespace HoldemController.ConsoleDisplay
             }
             return cards;
         }
-
 
         private static void DrawLines(IEnumerable<ConsoleLine> lines, ConsoleColor? bgColor = null, ConsoleColor? fgColor = null)
         {
@@ -232,9 +164,7 @@ namespace HoldemController.ConsoleDisplay
             var cardColor = GetSuitColor(suit);
             return new List<ConsoleLine>
             {
-                new ConsoleLine(startingX, startingY, rankSymbol + (isDouble ? " " : "  "), cardColor, ConsoleColor.White),
-                new ConsoleLine(startingX, startingY + 1, " " + GetSuitSymbol(suit) + " ", cardColor, ConsoleColor.White),
-                new ConsoleLine(startingX, startingY + 2, (isDouble ? " " : "  ") + rankSymbol, cardColor, ConsoleColor.White)
+                new ConsoleLine(startingX, startingY, rankSymbol + (isDouble ? " " : "  "), cardColor, ConsoleColor.White), new ConsoleLine(startingX, startingY + 1, " " + GetSuitSymbol(suit) + " ", cardColor, ConsoleColor.White), new ConsoleLine(startingX, startingY + 2, (isDouble ? " " : "  ") + rankSymbol, cardColor, ConsoleColor.White)
             };
         }
 
@@ -242,9 +172,7 @@ namespace HoldemController.ConsoleDisplay
         {
             return new List<ConsoleLine>
             {
-                new ConsoleLine(startingX, startingY, "   ", backgroundColor: color),
-                new ConsoleLine(startingX, startingY + 1, "   ", backgroundColor: color),
-                new ConsoleLine(startingX, startingY + 2, "   ", backgroundColor: color)
+                new ConsoleLine(startingX, startingY, "   ", backgroundColor: color), new ConsoleLine(startingX, startingY + 1, "   ", backgroundColor: color), new ConsoleLine(startingX, startingY + 2, "   ", backgroundColor: color)
             };
         }
 
@@ -313,45 +241,30 @@ namespace HoldemController.ConsoleDisplay
             }
         }
 
-        private IEnumerable<ConsoleLine> PokerTable()
-        {
-            var lines = new List<ConsoleLine>();
-            _boardHeight = Convert.ToInt32(_height * .7);
-            var y = _height / 2 - _boardHeight / 2;
-            var linePercent = .7;
+        //private IEnumerable<ConsoleLine> PokerTable()
+        //{
+        //    var lines = new List<ConsoleLine>();
+        //    var y = _height / 2 - _boardHeight / 2;
+        //    var linePercent = .7;
 
-            for (var i = 0; i < _boardHeight; i++)
-            {
-                if (i == 0)
-                {
-                    _minBoardWidth = Convert.ToInt32(_width  * linePercent);
-                }
-                lines.Add(new ConsoleLine(_width / 2 - (int)(_width * linePercent / 2), y, RepeatChar(" ", (int)(_width * linePercent))));
-                y++;
-                if (i < _boardHeight * .15)
-                {
-                    linePercent += 0.02;
-                } else if (i >= _boardHeight * .85)
-                {
-                    linePercent -= 0.02;
-                }
-                else
-                {
-                    _maxBoardWidth = Convert.ToInt32(_width * linePercent);
-                }
-                
-            }
-            return lines;
-        }
+        //    for (var i = 0; i < _boardHeight; i++)
+        //    {
+        //        lines.Add(new ConsoleLine(_width / 2 - (int)(_width * linePercent / 2), y, RepeatChar(" ", (int)(_width * linePercent))));
+        //        y++;
+        //        if (i < _boardHeight * .15)
+        //        {
+        //            linePercent += 0.02;
+        //        } else if (i >= _boardHeight * .85)
+        //        {
+        //            linePercent -= 0.02;
+        //        }
+        //        else
+        //        {
+        //            //_maxBoardWidth = Convert.ToInt32(_width * linePercent);
+        //        }
 
-        private static string RepeatChar(string chr, int numChars)
-        {
-            var str = "";
-            for (var i = 0; i < numChars; i++)
-            {
-                str += chr;
-            }
-            return str;
-        }
+        //    }
+        //    return lines;
+        //}
     }
 }
