@@ -1,5 +1,5 @@
 <HoldemConfig>
-  <GameRules littleBlind="1" 
+  <GameRules smallBlind="1" 
              bigBlind="2" 
              startingStack="200"
              maxNumRaisesPerBettingRound="-1"

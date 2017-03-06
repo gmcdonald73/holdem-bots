@@ -27,9 +27,9 @@ namespace HoldemPlayerContract.Player
 
         protected abstract PokerAction PerformAction(int betSize, int callAmount, int minRaise, int potSize);
         
-        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlind, int bigBlind)
+        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlindSize, int bigBlind)
         {
-            _hand = new HandState(players, smallBlind, bigBlind);
+            _hand = new HandState(players, smallBlindSize, bigBlind);
             _playerPosition = _hand.GetPlayer(PlayerId);
         }
 

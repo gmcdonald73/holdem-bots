@@ -30,7 +30,7 @@ namespace RaiserBot
             }
         }
 
-        public override void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
+        public override void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlindSize, int bigBlindSize)
         {
             _numRaisesThisStage = 0;
         }

@@ -34,7 +34,7 @@ namespace SleepyBot
             }
         }
 
-        public override void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
+        public override void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlindSize, int bigBlindSize)
         {
             // this is called at the start of every hand and tells you the current status of all players (e.g. if is alive and stack size and who is dealer)
             System.Threading.Thread.Sleep(_sleepMilliSeconds);

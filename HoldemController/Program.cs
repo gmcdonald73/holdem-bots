@@ -236,7 +236,7 @@ namespace HoldemController
             // Get game rules
             var gameConfigSettings = new Dictionary<string, string>
             {
-                {"littleBlind", _smallBlindSize.ToString()},
+                {"smallBlind", _smallBlindSize.ToString()},
                 {"bigBlind", _bigBlindSize.ToString()},
                 {"startingStack", _startingStack.ToString()},
                 {"maxNumRaisesPerBettingRound", _maxNumRaisesPerBettingRound.ToString()},
@@ -266,7 +266,7 @@ namespace HoldemController
             }
 
             // read values from dictionary
-            _smallBlindSize = Convert.ToInt32(gameConfigSettings["littleBlind"]);
+            _smallBlindSize = Convert.ToInt32(gameConfigSettings["smallBlind"]);
             _bigBlindSize = Convert.ToInt32(gameConfigSettings["bigBlind"]);
             _startingStack = Convert.ToInt32(gameConfigSettings["startingStack"]);
             _maxNumRaisesPerBettingRound = Convert.ToInt32(gameConfigSettings["maxNumRaisesPerBettingRound"]);
@@ -296,7 +296,7 @@ namespace HoldemController
 
             var gameConfig = new GameConfig
             {
-                LittleBlindSize = _smallBlindSize,
+                SmallBlindSize = _smallBlindSize,
                 BigBlindSize = _bigBlindSize,
                 StartingStack = _startingStack,
                 MaxNumRaisesPerBettingRound = _maxNumRaisesPerBettingRound,

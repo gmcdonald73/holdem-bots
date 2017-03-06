@@ -278,7 +278,7 @@ namespace HoldemController
             }
         }
 
-        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
+        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlindSize, int bigBlindSize)
         {
             _handNum++;
             IsActive = IsAlive;
@@ -290,7 +290,7 @@ namespace HoldemController
 
                 if (!IsBotBusy())
                 {
-                    _task = Task.Run(() => { RunInitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize); });
+                    _task = Task.Run(() => { RunInitHand(handNum, numPlayers, players, dealerId, smallBlindSize, bigBlindSize); });
 
                     // wait X amount of time for task to complete
                     if (!_task.Wait(_botTimeOutMilliSeconds))
@@ -309,20 +309,20 @@ namespace HoldemController
             else
             {
                 // timeout code disabled - just called method directly
-                RunInitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize);
+                RunInitHand(handNum, numPlayers, players, dealerId, smallBlindSize, bigBlindSize);
             }
 
             TimingLogger.Log(string.Format("{0}, {1}, {2}, {3}, {4:0.0000}", _handNum, Stage.StagePreflop, PlayerNum, MethodBase.GetCurrentMethod().Name, (double)_lastMethodElapsedTime.Ticks/TimeSpan.TicksPerMillisecond));
 
         }
 
-        private void RunInitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
+        private void RunInitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlindSize, int bigBlindSize)
         {
             try
             {
                 Stopwatch stopWatch = new Stopwatch();
                 stopWatch.Start();
-                _player.InitHand(handNum, numPlayers, players, dealerId, littleBlindSize, bigBlindSize);
+                _player.InitHand(handNum, numPlayers, players, dealerId, smallBlindSize, bigBlindSize);
                 stopWatch.Stop();
                 _lastMethodElapsedTime = stopWatch.Elapsed;
             }

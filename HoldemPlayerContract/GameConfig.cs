@@ -5,7 +5,7 @@ namespace HoldemPlayerContract
     [Serializable]
     public class GameConfig
     {
-        public int LittleBlindSize  {get; set; }
+        public int SmallBlindSize  {get; set; }
         public int BigBlindSize  {get; set; }
         public int StartingStack  {get; set; }
         public int MaxNumRaisesPerBettingRound  {get; set; }
