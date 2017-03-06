@@ -9,7 +9,7 @@
              randomDealer="true" 
              randomSeating="true"
              pauseAfterEachHand="false"
-             sleepAfterActionMilliSeconds="500"
+             sleepAfterActionMilliSeconds="1000"
              graphicsDisplay="true"
              />
   <Players>

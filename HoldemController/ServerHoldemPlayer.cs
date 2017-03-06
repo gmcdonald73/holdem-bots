@@ -160,7 +160,7 @@ namespace HoldemController
 
 
 
-        public string Name
+        public string Name // todo: properties should never do much work. so probably want to rethink whatever this is doing
         {
             get
             {

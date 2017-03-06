@@ -12,6 +12,10 @@ namespace HoldemController.ConsoleDisplay
         private const int HoldCardWidth = CardWidth*2 + 1;
         private const int CardHeight = 3;
         private const int CommunityCardsWidth = CardWidth*5 + 4;
+        private const int DealerChipWidth = 3;
+        private const int DealerChipHeight = 1;
+        private const int TurnIndicatorWidth = 3;
+        private const int TurnIndicatorHeight = 1;
 
         private const int ActionWidth = 10;
         private const int ActionHeight = 2;
@@ -20,8 +24,7 @@ namespace HoldemController.ConsoleDisplay
         private const int TableBorderWidth = HorizontalPadding + PlayerWidth + HorizontalPadding;
         private const int VerticalPadding = 1;
         private const int TableBorderHeight = VerticalPadding + PlayerHeight + VerticalPadding;
-
-
+        
         public DrawRegion(int width, int height, int playerCount)
         {
             if (playerCount > 8)
@@ -88,6 +91,30 @@ namespace HoldemController.ConsoleDisplay
 
                 PlayerCards.Add(i, new DrawArea(cardX, cardY, HoldCardWidth, CardHeight));
 
+                var dealerChipX = cardX;
+                var dealerChipY = cardY;
+                if (i == 0)
+                {
+                    dealerChipY -= 2;
+                    dealerChipX += 4;
+                }
+                else if (i == 4)
+                {
+                    dealerChipY += CardHeight + 1;
+                    dealerChipX += 4;
+                }
+                else if (i < 4)
+                {
+                    dealerChipX += HoldCardWidth + 2;
+                    dealerChipY += 1;
+                }
+                else
+                {
+                    dealerChipX -= DealerChipWidth + 2;
+                    dealerChipY += 1;
+                }
+                PlayerDealerChip.Add(i, new DrawArea(dealerChipX, dealerChipY, DealerChipWidth, DealerChipHeight));
+
                 var actionX = cardX;
                 var actionY = cardY;
                 if (i == 0)
@@ -107,6 +134,28 @@ namespace HoldemController.ConsoleDisplay
                     actionY = cardY - (CardHeight + VerticalPadding);
                 }
                 PlayerAction.Add(i, new DrawArea(actionX, actionY, ActionWidth, ActionHeight));
+
+                var turnX = actionX;
+                var turnY = actionY;
+                if (i == 0)
+                {
+                    turnX += ActionWidth + HorizontalPadding;
+                    turnY++;
+                }
+                else if (i == 4)
+                {
+                    turnX -= HorizontalPadding + TurnIndicatorWidth;
+                    turnY++;
+                }
+                else if (i < 4)
+                {
+                    turnY += ActionHeight;
+                }
+                else
+                {
+                    turnY -= 1;
+                }
+                PlayerTurnIndicator.Add(i, new DrawArea(turnX, turnY, TurnIndicatorWidth, TurnIndicatorHeight));
             }
         }
 
@@ -115,6 +164,8 @@ namespace HoldemController.ConsoleDisplay
         public Dictionary<int, DrawArea> Players { get; } = new Dictionary<int,DrawArea>();
         public Dictionary<int, DrawArea> PlayerCards { get; } = new Dictionary<int, DrawArea>();
         public Dictionary<int, DrawArea> PlayerAction { get; } = new Dictionary<int, DrawArea>();
+        public Dictionary<int, DrawArea> PlayerDealerChip { get; } = new Dictionary<int, DrawArea>();
+        public Dictionary<int, DrawArea> PlayerTurnIndicator { get; } = new Dictionary<int, DrawArea>();
 
         public class DrawArea
         {

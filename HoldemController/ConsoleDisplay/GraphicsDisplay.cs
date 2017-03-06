@@ -41,7 +41,7 @@ namespace HoldemController.ConsoleDisplay
                     var uiPlayer = _players[player.PlayerNum];
                     uiPlayer.IsAlive = player.IsAlive;
                     uiPlayer.IsActive = player.IsAlive; // if alive then player is active at start of hand
-                    uiPlayer.BetsThisHand = 0;
+                    uiPlayer.TotalStageBet = 0;
                     uiPlayer.StackSize = player.StackSize;
                 }
             }
@@ -80,7 +80,7 @@ namespace HoldemController.ConsoleDisplay
             }
 
             _display.UpdatePlayer(player);
-            _display.UpdatePlayerAction(player.IsAlive, playerId, action, betSize);
+            _display.UpdatePlayerAction(player, action, betSize);
             _display.UpdatePots(potMan.Pots);
 
             if(_sleepAfterActionMilliSeconds > 0)

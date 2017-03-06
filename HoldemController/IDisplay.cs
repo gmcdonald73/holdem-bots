@@ -14,18 +14,4 @@ namespace HoldemController
         void DisplayShowdown(HandRanker handRanker, PotManager potMan);
         void DisplayEndOfGame(int numPlayers, List<PlayerInfo> players);
     }
-
-    internal interface IEventHandler
-    {
-        void Initialise(); // initial game state + players
-        void BeginHand();
-        void TakeBlinds(int playerId, int amount);
-        void BeginStage(Stage stage, Card[] cards);
-        void DealHand(int playerId, Card card1, Card card2);
-        void PlayerActionPerformed(int playerId, int stackSize, ActionType action, int betAmount);
-        void EndStage(); // might not be needed
-        void DistributeWinnigs(int playerId, int amount);
-        void EndHand(); // clear some junk?
-        void EndGame();
-    }
 }
