@@ -452,10 +452,7 @@ namespace HoldemController
                 display.DisplayEndOfGame(playerInfoList.Count, playerInfoList);
             }
 
-            foreach (var handler in _eventHandlers)
-            {
-                handler.EndGame();
-            }
+            BroadcastEndGame();
         }
 
         private void TakeBlinds(Dictionary<int, int> roundBets)
@@ -502,10 +499,7 @@ namespace HoldemController
                     display.DisplayHoleCards(playerId, hole1, hole2);
                 }
 
-                foreach (var handler in _eventHandlers)
-                {
-                    handler.DealHand(playerId, hole1, hole2);
-                }
+                BroadcastHoleCards(playerId, hole1, hole2);
             }
         }
 
@@ -539,24 +533,21 @@ namespace HoldemController
                 display.DisplayAction(stage, playerId, action, amount, betSize, callAmount, raiseAmount, isAllIn, _potMan);
             }
 
-            foreach (var handler in _eventHandlers)
+            switch (action)
             {
-                switch (action)
-                {
-                    case ActionType.Blind:
-                        handler.TakeBlinds(playerId, amount);
-                        break;
-                    case ActionType.Fold:
-                    case ActionType.Check:
-                    case ActionType.Call:
-                    case ActionType.Raise:
-                        handler.PlayerActionPerformed(playerId, serverHoldemPlayer.StackSize, action, betSize);
-                        break;
-                    case ActionType.Show:
-                        break;
-                    case ActionType.Win:
-                        break;
-                }
+                case ActionType.Blind:
+                    BroadcastBlinds(playerId, amount);
+                    break;
+                case ActionType.Fold:
+                case ActionType.Check:
+                case ActionType.Call:
+                case ActionType.Raise:
+                    BroadcastPlayerAction(playerId, serverHoldemPlayer.StackSize, action, betSize);
+                    break;
+                case ActionType.Show:
+                    break;
+                case ActionType.Win:
+                    break;
             }
         }
 
@@ -910,14 +901,6 @@ namespace HoldemController
             _potMan.EmptyPot();
         }
 
-        private void BroadcastWinnings(IDictionary<int, int> playerWinnings)
-        {
-            foreach (var handler in _eventHandlers)
-            {
-                handler.DistributeWinnigs(playerWinnings);
-            }
-        }
-
         private void KillBrokePlayers()
         {
             // Kill off broke players
@@ -958,6 +941,22 @@ namespace HoldemController
             }
         }
 
+        private void BroadcastBlinds(int playerId, int amount)
+        {
+            foreach (var handler in _eventHandlers)
+            {
+                handler.TakeBlinds(playerId, amount);
+            }
+        }
+
+        private void BroadcastHoleCards(int playerId, Card hole1, Card hole2)
+        {
+            foreach (var handler in _eventHandlers)
+            {
+                handler.DealHand(playerId, hole1, hole2);
+            }
+        }
+
         private void BroadcastBeginStage(Stage stage, Card[] cards)
         {
             foreach (var handler in _eventHandlers)
@@ -974,6 +973,14 @@ namespace HoldemController
             }
         }
 
+        private void BroadcastPlayerAction(int playerId, int stackSize, ActionType action, int betSize)
+        {
+            foreach (var handler in _eventHandlers)
+            {
+                handler.PlayerActionPerformed(playerId, stackSize, action, betSize);
+            }
+        }
+
         private void BroadcastEndStage()
         {
             foreach (var handler in _eventHandlers)
@@ -982,11 +989,27 @@ namespace HoldemController
             }
         }
 
+        private void BroadcastWinnings(IDictionary<int, int> playerWinnings)
+        {
+            foreach (var handler in _eventHandlers)
+            {
+                handler.DistributeWinnigs(playerWinnings);
+            }
+        }
+
         private void BroadcastEndHand()
         {
             foreach (var handler in _eventHandlers)
             {
                 handler.EndHand();
+            }
+        }
+
+        private void BroadcastEndGame()
+        {
+            foreach (var handler in _eventHandlers)
+            {
+                handler.EndGame();
             }
         }
     }
