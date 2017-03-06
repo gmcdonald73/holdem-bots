@@ -53,7 +53,7 @@ namespace HoldemController
             Thread.Sleep(_delayMilliseconds);
         }
 
-        public void DistributeWinnigs(IDictionary<int, int> playerWinnings)
+        public void DistributeWinnings(IDictionary<int, int> playerWinnings)
         {
             Thread.Sleep(_delayMilliseconds);
         }

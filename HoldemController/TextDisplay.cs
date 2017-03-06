@@ -1,10 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using HoldemPlayerContract;
 
 namespace HoldemController
 {
     internal class TextDisplay : IDisplay
     {
+        int _numPlayers;
+
         public void SetWriteToConsole(bool writeToConsole)
         {
             Logger.SetWriteToConsole(writeToConsole);
@@ -12,10 +18,10 @@ namespace HoldemController
 
         public void Initialise(GameConfig gameConfig, int numPlayers, int sleepAfterActionMilliSeconds)
         {
-
+            _numPlayers = numPlayers;
         }
 
-        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int smallBlindSize, int bigBlindSize)
+        public void InitHand(int handNum, int numPlayers, List<PlayerInfo> players, int dealerId, int littleBlindSize, int bigBlindSize)
         {
             Logger.Log("");
             Logger.Log("---------*** HAND {0} ***----------", handNum);
@@ -63,6 +69,54 @@ namespace HoldemController
 
         public void DisplayShowdown(HandRanker handRanker, PotManager potMan)
         {
+            int i;
+
+            // show pots
+            Logger.Log("");
+
+            string sLogMsg = "Pots     \t";
+
+            for(i=0; i<potMan.Pots.Count(); i++)
+            {
+                sLogMsg += i + "\t";
+            }
+
+            sLogMsg += "Total";
+            Logger.Log(sLogMsg);
+
+            // !!! only show live players?
+            for(i=0; i<_numPlayers; i++)
+            {
+                sLogMsg = "Player " + i + "\t";
+
+                // !!! show stack size for player here?
+
+                foreach (var p in potMan.Pots)
+                {
+                    int value = 0;
+
+                    if(p.PlayerContributions.ContainsKey(i))
+                    {
+                        value = p.PlayerContributions[i];
+                    }
+
+                    sLogMsg += value + "\t";
+                }
+
+                sLogMsg += potMan.PlayerContributions(i);
+                Logger.Log(sLogMsg);
+            }
+
+            sLogMsg = "Total   ";
+
+            foreach (var p in potMan.Pots)
+            {
+                sLogMsg += "\t" + p.Size();
+            }
+
+            Logger.Log(sLogMsg);
+
+            // Show hand ranks
             Logger.Log("");
             Logger.Log("--- Hand Ranks ---");
 
@@ -70,9 +124,9 @@ namespace HoldemController
             {
                 var hand = hri.Hand;
 
-                var sLogMsg = hand.HandRankStr() + " ";
+                sLogMsg = hand.HandRankStr() + " ";
 
-                for (var i = 0; i < hand.NumSubRanks(); i++)
+                for (i = 0; i < hand.NumSubRanks(); i++)
                 {
                     sLogMsg += hand.SubRank(i) + " ";
                 }
@@ -97,74 +151,5 @@ namespace HoldemController
 
             Logger.Log("---------------");
         }
-
-/*
-        public void ViewCash()
-        {
-            var potNum = 0;
-
-            Logger.Log("");
-            Logger.Log("--- View Money ---");
-
-            string sLogMsg;
-            // show player numbers
-            sLogMsg = "Players\t";
-
-            foreach (var player in _players)
-            {
-                if (player.IsAlive)
-                {
-                    sLogMsg += player.PlayerNum + "\t";
-                }
-            }
-
-            sLogMsg += "Total";
-            Logger.Log(sLogMsg);
-
-            // Show stack size
-            sLogMsg = "Stack\t";
-
-            var totalStackSize = 0;
-            foreach (var player in _players)
-            {
-                if (player.IsAlive)
-                {
-                    sLogMsg += player.StackSize + "\t";
-                    totalStackSize += player.StackSize;
-                }
-            }
-
-            sLogMsg += totalStackSize;
-            Logger.Log(sLogMsg);
-
-            // Show breakdown of each pot
-            foreach (var p in _potMan.Pots)
-            {
-                var playerAmount = new int[_players.Length];
-
-                sLogMsg = "Pot " + potNum + "\t";
-
-                foreach (var pair in p.PlayerContributions)
-                {
-                    playerAmount[pair.Key] = pair.Value;
-                }
-
-                foreach (var player in _players)
-                {
-                    if (player.IsAlive)
-                    {
-                        sLogMsg += playerAmount[player.PlayerNum] + "\t";
-                    }
-                }
-
-                sLogMsg += p.Size();
-                Logger.Log(sLogMsg);
-
-                potNum++;
-            }
-
-            Logger.Log("");
-        }
-*/
     }
 }

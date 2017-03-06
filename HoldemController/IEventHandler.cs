@@ -13,7 +13,7 @@ namespace HoldemController
         void AwaitingPlayerAction(int playerId);
         void PlayerActionPerformed(int playerId, int stackSize, ActionType action, int betAmount);
         void EndStage(List<Pot> pots); // might not be needed
-        void DistributeWinnigs(IDictionary<int, int> playerWinnings);
+        void DistributeWinnings(IDictionary<int, int> playerWinnings);
         void EndHand(); // clear some junk?
         void EndGame();
     }

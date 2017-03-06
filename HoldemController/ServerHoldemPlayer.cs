@@ -104,6 +104,12 @@ namespace HoldemController
         {
             PlayerNum = pPlayerNum;
             StackSize =  gameConfig.StartingStack;
+
+            if (playerConfigSettings.ContainsKey("startingStack"))
+            {
+                StackSize = Convert.ToInt32(playerConfigSettings["startingStack"]);
+            }
+
             _botTimeOutMilliSeconds = gameConfig.BotTimeOutMilliSeconds;
 
             if (_botTimeOutMilliSeconds > 0)
@@ -536,6 +542,8 @@ namespace HoldemController
                         playersBetAmount = minRaise;
                     }
                 */
+/*
+I don't think this bit is correct if a player is going all in
                 if (playersBetAmount < minRaise) // if not enough to raise, then call
                 {
                     if (playersBetAmount < callAmount) // if not enough to call, then fold
@@ -549,6 +557,7 @@ namespace HoldemController
                         playersAction = ActionType.Call;
                     }
                 }
+*/
             }
 
             if (playersBetAmount > StackSize)

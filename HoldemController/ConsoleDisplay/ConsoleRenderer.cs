@@ -82,7 +82,7 @@ namespace HoldemController.ConsoleDisplay
             _display.ShowPlayerTurn(null);
         }
 
-        public void DistributeWinnigs(IDictionary<int, int> playerWinnings)
+        public void DistributeWinnings(IDictionary<int, int> playerWinnings)
         {
             foreach (var winnings in playerWinnings)
             {

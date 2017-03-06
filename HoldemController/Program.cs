@@ -37,12 +37,23 @@ namespace HoldemController
         private int _sleepAfterActionMilliSeconds;
         private bool _bGraphicsDisplay;
         
-        static void Main()
+        static void Main(string [] args)
         {
             try
             {
+                string sConfigFile;
+
+                if(args.Length > 0)
+                {
+                    sConfigFile = args[0];
+                }
+                else
+                {
+                    sConfigFile = "HoldemConfig.xml";
+                }
+
                 var prog = new Program();
-                prog.PlayGame();
+                prog.PlayGame(sConfigFile);
             }
             catch (Exception e)
             {
@@ -58,9 +69,9 @@ namespace HoldemController
             Console.ReadKey();
         }
 
-        public void PlayGame()
+        public void PlayGame(string sConfigFile)
         {
-            LoadConfig();
+            LoadConfig(sConfigFile);
 
             var bDone = false;
             var handNum = 0;
@@ -212,9 +223,9 @@ namespace HoldemController
             EndOfGame();
         }
 
-        private void LoadConfig()
+        private void LoadConfig(string sConfigFile)
         {
-            var doc = XDocument.Load("HoldemConfig.xml");
+            var doc = XDocument.Load(sConfigFile);
 
             Logger.Log("--- *** CONFIG *** ---");
             Logger.Log(doc.ToString());
@@ -993,7 +1004,7 @@ namespace HoldemController
         {
             foreach (var handler in _eventHandlers)
             {
-                handler.DistributeWinnigs(playerWinnings);
+                handler.DistributeWinnings(playerWinnings);
             }
         }
 
