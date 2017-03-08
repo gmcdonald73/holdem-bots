@@ -64,7 +64,7 @@ namespace HoldemController
             Logger.Close();
             TimingLogger.Close();
 
-            Console.SetCursorPosition(0,0);
+//            Console.SetCursorPosition(0,0);
             Console.WriteLine("-- press any key to exit --");
             Console.ReadKey();
         }
@@ -628,7 +628,8 @@ namespace HoldemController
                     // get the players action
                     ActionType playersAction;
                     int playersBetAmount;
-                    player.GetAction(stage, callLevel, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
+                    int stageMaxBets =  roundBets.Max(kvp => kvp.Value);
+                    player.GetAction(stage, stageMaxBets, callAmount, minRaise, maxRaise, raisesRemaining, _potMan.Size(), out playersAction, out playersBetAmount);
 
                     // *** DO ACTION ***
                     if (playersAction == ActionType.Fold)
