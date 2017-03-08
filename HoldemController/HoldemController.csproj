@@ -47,12 +47,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ConsoleDisplay\ConsoleLine.cs" />
+    <Compile Include="ConsoleDisplay\CardFormatter.cs" />
+    <Compile Include="ConsoleDisplay\ConsoleDisplayHandler.cs" />
     <Compile Include="ConsoleDisplay\ConsoleRenderer.cs" />
-    <Compile Include="ConsoleDisplay\DrawRegion.cs" />
-    <Compile Include="ConsoleDisplay\UiPlayer.cs" />
+    <Compile Include="ConsoleDisplay\DrawArea.cs" />
     <Compile Include="Deck.cs" />
-    <Compile Include="ConsoleDisplay\DisplayManager.cs" />
     <Compile Include="HandRanker.cs" />
     <Compile Include="HandRankInfo.cs" />
     <Compile Include="IDisplay.cs" />

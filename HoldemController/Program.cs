@@ -294,7 +294,7 @@ namespace HoldemController
             if(_bGraphicsDisplay)
             {
                 //_displays.Add(new GraphicsDisplay());
-                _eventHandlers.Add(new ConsoleRenderer());
+                _eventHandlers.Add(new ConsoleDisplayHandler());
             }
             if (_sleepAfterActionMilliSeconds > 0)
             {

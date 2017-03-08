@@ -6,9 +6,14 @@ namespace HoldemController
 {
     internal class SleepHandler : IEventHandler
     {
-        private readonly int _delayMilliseconds;
+        private int _delayMilliseconds;
 
         public SleepHandler(int delayMilliseconds)
+        {
+            UpdateDelay(delayMilliseconds);
+        }
+
+        public void UpdateDelay(int delayMilliseconds)
         {
             _delayMilliseconds = delayMilliseconds;
         }
