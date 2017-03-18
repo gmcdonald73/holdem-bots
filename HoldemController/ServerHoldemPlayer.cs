@@ -19,6 +19,7 @@ namespace HoldemController
     {
         private readonly IHoldemPlayer _player;
         public int StackSize { get; set; }
+        public int StackSizeAtStartOfHand { get; set; }
         public bool IsActive { get; set; }
         public bool IsAlive { get; set; }
 
@@ -44,7 +45,7 @@ namespace HoldemController
             return _lastMethodElapsedTime.Ticks;
         }
 
-        public ServerHoldemPlayer(int sandBoxNum, string dllName)
+        public ServerHoldemPlayer(int sandBoxNum, string dllName, bool isTrusted = false)
         {
             string botDir = "bots\\";
             string dllFile = botDir + dllName;
@@ -73,7 +74,7 @@ namespace HoldemController
                 throw new Exception(String.Format("A class that implements the IHoldemPlayer interface was not found in {0}.", dllFile));
             }
 
-            if(dllFile == "bots\\ObserverBot.dll")
+            if(isTrusted)
             {
                 // If bots is trusted then run inside the current app domain
                 // !!! need a better way to identify trusted bots !!! use signing?
@@ -288,6 +289,7 @@ namespace HoldemController
         {
             _handNum++;
             IsActive = IsAlive;
+            StackSizeAtStartOfHand = StackSize;
 
             if (_botTimeOutMilliSeconds > 0)
             {

@@ -5,6 +5,8 @@ namespace HoldemPlayerContract
     [Serializable]
     public class GameConfig
     {
+        public string ConfigFileName  {get; set; }
+        public string OutputBase  {get; set; }
         public int SmallBlindSize  {get; set; }
         public int BigBlindSize  {get; set; }
         public int StartingStack  {get; set; }

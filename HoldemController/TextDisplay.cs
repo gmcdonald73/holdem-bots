@@ -16,6 +16,11 @@ namespace HoldemController
             Logger.SetWriteToConsole(writeToConsole);
         }
 
+        public void SetLogFileName(string sLogFileName)
+        {
+            Logger.SetLogFileName(sLogFileName);
+        }
+
         public void Initialise(GameConfig gameConfig, int numPlayers, int sleepAfterActionMilliSeconds)
         {
             _numPlayers = numPlayers;

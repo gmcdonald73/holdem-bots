@@ -45,7 +45,10 @@ namespace ObserverBot
             // This is called once at the start of the game. playerNum is your unique identifer for the game
             _playerNum = playerNum;
             _board = new Card[5];
-            _tw = new StreamWriter("playerinfo.txt", false);
+
+            string sFileName = "logs\\" + gameConfig.OutputBase + "_playerinfo.tab";
+
+            _tw = new StreamWriter(sFileName, false);
         }
 
         public override string Name

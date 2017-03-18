@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Xml.Linq;
+using System.IO;
 using HoldemController.ConsoleDisplay;
 using HoldemPlayerContract;
 
@@ -36,12 +37,17 @@ namespace HoldemController
         private bool _bPauseAfterEachHand;
         private int _sleepAfterActionMilliSeconds;
         private bool _bGraphicsDisplay;
+
+        public bool GraphicsDisplay() { return _bGraphicsDisplay; }
         
         static void Main(string [] args)
         {
+            bool bGraphicsDisplay = false;
+
             try
             {
                 string sConfigFile;
+                string sOutputBase;
 
                 if(args.Length > 0)
                 {
@@ -52,26 +58,55 @@ namespace HoldemController
                     sConfigFile = "HoldemConfig.xml";
                 }
 
-                var prog = new Program();
-                prog.PlayGame(sConfigFile);
+                sOutputBase = Path.GetFileNameWithoutExtension(sConfigFile);
+
+                int numGames = 1; 
+
+                if(args.Length > 1)
+                {
+                    if(!Int32.TryParse(args[1], out numGames))
+                    {
+                        numGames = 1;
+                    }
+                }
+
+                int gameNum = 0;
+
+                while(gameNum < numGames)
+                {
+                    var prog = new Program();
+
+                    prog.PlayGame(sConfigFile, sOutputBase + "." + gameNum);
+                    bGraphicsDisplay = prog.GraphicsDisplay();
+
+                    Logger.Close();
+                    TimingLogger.Close();
+                    gameNum++;
+                }
             }
             catch (Exception e)
             {
                 var sExceptionMessage = "EXCEPTION : " + e.Message + "\nPlease send gamelog.txt to gmcdonald73@gmail.com";
-                Logger.Log(sExceptionMessage);
+                Console.WriteLine(sExceptionMessage);
             }
+            finally
+            {
+                Logger.Close();
+                TimingLogger.Close();
 
-            Logger.Close();
-            TimingLogger.Close();
+                if(bGraphicsDisplay)
+                {
+                    Console.SetCursorPosition(0,0);
+                }
 
-//            Console.SetCursorPosition(0,0);
-            Console.WriteLine("-- press any key to exit --");
-            Console.ReadKey();
+                Console.WriteLine("-- press any key to exit --");
+                Console.ReadKey();
+            }
         }
 
-        public void PlayGame(string sConfigFile)
+        public void PlayGame(string sConfigFile, string sOutputBase)
         {
-            LoadConfig(sConfigFile);
+            LoadConfig(sConfigFile, sOutputBase);
 
             var bDone = false;
             var handNum = 0;
@@ -221,11 +256,30 @@ namespace HoldemController
             }
 
             EndOfGame();
+
+            // Write entry to summary log - !!! do this in EndofGame / new Display class?
+            TextWriter logTextWriter = new StreamWriter("logs\\Summary.txt", true);
+
+            var playerInfos = GetListOfPlayerInfos();
+            foreach(var p in playerInfos)
+            {
+                if(p.IsAlive)
+                {
+                    logTextWriter.WriteLine(sConfigFile + "\t" + sOutputBase + "\t" + p.Name + "\t" + handNum);
+                }
+            }
+            
+            logTextWriter.Close();
+
         }
 
-        private void LoadConfig(string sConfigFile)
+        private void LoadConfig(string sConfigFile, string sOutputBase)
         {
             var doc = XDocument.Load(sConfigFile);
+
+            // This must happen before we write the first log message
+            Logger.SetLogFileName("logs\\" + sOutputBase + "_gamelog.txt");
+            TimingLogger.SetLogFileName("logs\\" + sOutputBase + "_calllog.csv");
 
             Logger.Log("--- *** CONFIG *** ---");
             Logger.Log(doc.ToString());
@@ -303,10 +357,13 @@ namespace HoldemController
 
             var textDisplay = new TextDisplay();
             textDisplay.SetWriteToConsole(!_bGraphicsDisplay);
+
             _displays.Add(textDisplay);
 
             var gameConfig = new GameConfig
             {
+                ConfigFileName = sConfigFile,
+                OutputBase = sOutputBase,
                 SmallBlindSize = _smallBlindSize,
                 BigBlindSize = _bigBlindSize,
                 StartingStack = _startingStack,
@@ -338,9 +395,15 @@ namespace HoldemController
                 var playerConfigSettings = player.Attributes().ToDictionary(attr => attr.Name.ToString(), attr => attr.Value);
 
                 // read player attributes, add to player config
+                string sValue;
+                bool isTrusted = false;
+                if(playerConfigSettings.TryGetValue("trusted", out sValue))
+                {
+                    Boolean.TryParse(sValue, out isTrusted);
+                }
 
                 playerConfigSettingsList.Add(playerConfigSettings);
-                var bot = new ServerHoldemPlayer(botNum,  playerConfigSettings["dll"]);
+                var bot = new ServerHoldemPlayer(botNum,  playerConfigSettings["dll"], isTrusted);
                 _allBots.Add(bot);
                 botNum++;
 
@@ -682,11 +745,23 @@ namespace HoldemController
 
         private void CalcRequiredBetAmounts(int currBettor, int callLevel, int lastFullPureRaise, out int callAmount, out int minRaise, out int maxRaise)
         {
-            callAmount = callLevel - _potMan.PlayerContributions(currBettor);
+            int currBettorContributions = _potMan.PlayerContributions(currBettor);
+            callAmount = callLevel - currBettorContributions;
 
-            maxRaise = _players[currBettor].StackSize; //  if no limit - change this if limit game
+            // Don't let a player raise more than any other player can call 
+            maxRaise =  _players.Where(p => p.IsActive && p.PlayerNum != currBettor).Max(p => p.StackSizeAtStartOfHand) - currBettorContributions;
+
+            if(maxRaise > _players[currBettor].StackSize)
+            {
+                maxRaise = _players[currBettor].StackSize;
+            }
 
             minRaise = callAmount + lastFullPureRaise;
+
+            if(minRaise > maxRaise)
+            {
+                minRaise = maxRaise;
+            }
         }
 
         private int GetNumActivePlayers()
