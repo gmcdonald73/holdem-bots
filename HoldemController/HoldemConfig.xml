@@ -16,7 +16,7 @@
 		<Player dll="CallerBot.dll" />
     <Player dll="RaiserBot.dll" maxRaisesPerStage="3" />
     <Player dll="CallerBot.dll" />
-    <Player dll="ObserverBot.dll" />
+    <Player dll="ObserverBot.dll" trusted="true" />
     <Player dll="RandomBot.dll" />
     <Player dll="CallerBot.dll" />
     <Player dll="CallerBot.dll" />
