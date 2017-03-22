@@ -86,7 +86,7 @@ namespace HoldemController
             }
             catch (Exception e)
             {
-                var sExceptionMessage = "EXCEPTION : " + e.Message + "\nPlease send gamelog.txt to gmcdonald73@gmail.com";
+                var sExceptionMessage = "EXCEPTION : " + e + "\nPlease send gamelog.txt to gmcdonald73@gmail.com";
                 Console.WriteLine(sExceptionMessage);
             }
             finally
@@ -278,8 +278,8 @@ namespace HoldemController
             var doc = XDocument.Load(sConfigFile);
 
             // This must happen before we write the first log message
-            Logger.SetLogFileName("logs\\" + sOutputBase + "_gamelog.txt");
-            TimingLogger.SetLogFileName("logs\\" + sOutputBase + "_calllog.csv");
+            Logger.Initialize("logs\\" + sOutputBase + "_gamelog.txt");
+            TimingLogger.Initialize("logs\\" + sOutputBase + "_calllog.csv");
 
             Logger.Log("--- *** CONFIG *** ---");
             Logger.Log(doc.ToString());

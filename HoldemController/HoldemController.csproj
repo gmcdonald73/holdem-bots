@@ -52,11 +52,12 @@
     <Compile Include="ConsoleDisplay\ConsoleRenderer.cs" />
     <Compile Include="ConsoleDisplay\DrawArea.cs" />
     <Compile Include="Deck.cs" />
+    <Compile Include="Logging\FileLogger.cs" />
     <Compile Include="HandRanker.cs" />
     <Compile Include="HandRankInfo.cs" />
     <Compile Include="IDisplay.cs" />
     <Compile Include="IEventHandler.cs" />
-    <Compile Include="Logger.cs" />
+    <Compile Include="Logging\Logger.cs" />
     <Compile Include="Pot.cs" />
     <Compile Include="PotManager.cs" />
     <Compile Include="Program.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="ServerHoldemPlayer.cs" />
     <Compile Include="SleepHandler.cs" />
     <Compile Include="TextDisplay.cs" />
+    <Compile Include="Logging\TimingLogger.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

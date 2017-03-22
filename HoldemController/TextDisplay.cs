@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using HoldemPlayerContract;
 
 namespace HoldemController
@@ -16,9 +13,9 @@ namespace HoldemController
             Logger.SetWriteToConsole(writeToConsole);
         }
 
-        public void SetLogFileName(string sLogFileName)
+        public void SetLogFileName(string fileName)
         {
-            Logger.SetLogFileName(sLogFileName);
+            Logger.Initialize(fileName);
         }
 
         public void Initialise(GameConfig gameConfig, int numPlayers, int sleepAfterActionMilliSeconds)
