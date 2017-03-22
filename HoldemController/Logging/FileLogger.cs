@@ -9,6 +9,11 @@ namespace HoldemController
 
         public FileLogger(string fileName)
         {
+            var directory = Path.GetDirectoryName(fileName);
+            if (directory != null)
+            {
+                Directory.CreateDirectory(directory);
+            }
             _writer = new StreamWriter(fileName, false);
         }
 
