@@ -4,6 +4,7 @@ using System.Linq;
 using System.Xml.Linq;
 using System.IO;
 using HoldemController.ConsoleDisplay;
+using HoldemController.Logging;
 using HoldemPlayerContract;
 
 namespace HoldemController
@@ -47,7 +48,6 @@ namespace HoldemController
             try
             {
                 string sConfigFile;
-                string sOutputBase;
 
                 if(args.Length > 0)
                 {
@@ -58,7 +58,7 @@ namespace HoldemController
                     sConfigFile = "HoldemConfig.xml";
                 }
 
-                sOutputBase = Path.GetFileNameWithoutExtension(sConfigFile);
+                var sOutputBase = Path.GetFileNameWithoutExtension(sConfigFile);
 
                 int numGames = 1; 
 

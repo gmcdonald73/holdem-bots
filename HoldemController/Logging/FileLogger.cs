@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace HoldemController
+namespace HoldemController.Logging
 {
     public class FileLogger : IDisposable
     {

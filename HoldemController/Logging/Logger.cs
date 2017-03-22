@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HoldemController
+namespace HoldemController.Logging
 {
     internal static class Logger
     {

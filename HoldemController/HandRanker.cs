@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using HoldemController.Logging;
 using HoldemPlayerContract;
 
 namespace HoldemController

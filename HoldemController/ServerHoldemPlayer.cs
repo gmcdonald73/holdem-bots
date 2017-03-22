@@ -10,7 +10,7 @@ using System.Security;
 using System.Security.Policy;
 using System.Security.Permissions;
 using System.Runtime.Remoting;
-
+using HoldemController.Logging;
 using HoldemPlayerContract;
 
 namespace HoldemController
