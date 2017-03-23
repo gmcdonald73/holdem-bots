@@ -590,8 +590,8 @@ I don't think this bit is correct if a player is going all in
 
             if (playersAction == ActionType.Check && callAmount > 0)
             {
-                // invalid action - can't check so change to call
-                playersAction = ActionType.Call;
+                // invalid action - can't check so change to fold
+                playersAction = ActionType.Fold;
             }
 
             if (playersAction == ActionType.Raise && playersBetAmount <= callAmount)

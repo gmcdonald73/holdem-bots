@@ -7,23 +7,12 @@ namespace HoldemController
 
     public class Deck
     {
-        private readonly Card[] _cards = new Card[52];
+        private readonly Card[] _cards;
         private int _topCard;
 
         public Deck()
         {
-            int i;
-
-            for (i = 0; i < 52; i++)
-            {
-                var rank = (ERankType)(i % 13);
-                var suit = (ESuitType)(i / 13);
-
-                var card = new Card(rank, suit);
-
-                _cards[i] = card;
-            }
-
+            _cards = GetCards();
             Shuffle();
         }
 
@@ -61,6 +50,21 @@ namespace HoldemController
             _topCard++;
             return card;
         }
-    }
 
+        public static Card[] GetCards()
+        {
+            int i;
+            var cards = new Card[52];
+            for (i = 0; i < 52; i++)
+            {
+                var rank = (ERankType)(i % 13);
+                var suit = (ESuitType)(i / 13);
+
+                var card = new Card(rank, suit);
+
+                cards[i] = card;
+            }
+            return cards;
+        }
+    }
 }

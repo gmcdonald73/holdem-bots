@@ -1,9 +1,11 @@
-﻿namespace HoldemPlayerContract.Player
+﻿using System.Collections.Generic;
+
+namespace HoldemPlayerContract.Player
 {
     public interface IHand
     {
         Stage Stage { get; }
-        Card[] CommunityCards { get; }
+        IReadOnlyCollection<Card> CommunityCards { get; }
 
         int SmallBlind { get; }
         int BigBlind { get; }

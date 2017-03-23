@@ -8,6 +8,7 @@ namespace HoldemPlayerContract.Player
     {
         private readonly List<HandAction> _actions = new List<HandAction>();
         private readonly Dictionary<int, PlayerHandState> _players;
+        private readonly List<Card> _communityCards = new List<Card>();
 
         public HandState(IEnumerable<PlayerInfo> players, int smallBlind, int bigBlind)
         {
@@ -19,12 +20,12 @@ namespace HoldemPlayerContract.Player
         public int SmallBlind { get; }
         public int BigBlind { get; }
         public Stage Stage { get; private set; }
-        
-        public Card[] CommunityCards => new Card[5];
-        
+
+        public IReadOnlyCollection<Card> CommunityCards => _communityCards.ToList();
+
         public void SetCommunityCard(Card card, EBoardCardType cardType)
         {
-            CommunityCards[(int)cardType] = card;
+            _communityCards.Add(card);
         }
 
         public void SetAction(Stage stage, int playerId, ActionType action, int amount)

@@ -162,9 +162,6 @@ namespace HoldemPlayerContract
 
         public static Hand FindPlayersBestHand(IReadOnlyList<Card> pocketCards, IReadOnlyList<Card> board)
         {
-//            var cards = new Card[7];
-            List<Card> cards = new List<Card>();
-
             if (pocketCards.Count != 2)
             {
                 throw new Exception("must supply exactly 2 pocket cards");
@@ -181,15 +178,10 @@ namespace HoldemPlayerContract
             }
 
             // Put all cards together
-            cards.Add(pocketCards[0]);
-            cards.Add(pocketCards[1]);
+            var allCards = new List<Card>(pocketCards);
+            allCards.AddRange(board);
 
-            foreach(Card c in board)
-            {
-                cards.Add(c);
-            }
-
-            return FindPlayersBestHand(cards);
+            return FindPlayersBestHand(allCards);
         }
 
         public static Hand FindPlayersBestHand(IReadOnlyList<Card> cards)
