@@ -5,20 +5,19 @@
              maxNumRaisesPerBettingRound="-1"
              maxHands="-1"
              doubleBlindFrequency="19" 
-             botTimeOutMilliSeconds ="1000"
+             botTimeOutMilliSeconds ="5000"
              randomDealer="true" 
              randomSeating="true"
              pauseAfterEachHand="false"
-             sleepAfterActionMilliSeconds="1000"
-             graphicsDisplay="true"
+             sleepAfterActionMilliSeconds="0"
+             graphicsDisplay="false"
              />
   <Players>
-		<Player dll="CallerBot.dll" />
-    <Player dll="RaiserBot.dll" maxRaisesPerStage="3" />
+    <Player dll="BetterBot.dll" />
     <Player dll="CallerBot.dll" />
-    <Player dll="ObserverBot.dll" trusted="true" />
+    <Player dll="GMachine.dll" />
     <Player dll="RandomBot.dll" />
-    <Player dll="CallerBot.dll" />
-    <Player dll="CallerBot.dll" />
+    <Player dll="SmartBot.dll" />
+    <Player dll="ObserverBot.dll" trusted="true" />
   </Players>
 </HoldemConfig>
