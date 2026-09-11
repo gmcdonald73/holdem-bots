@@ -8,9 +8,9 @@
              botTimeOutMilliSeconds ="5000"
              randomDealer="true" 
              randomSeating="true"
-             pauseAfterEachHand="false"
-             sleepAfterActionMilliSeconds="0"
-             graphicsDisplay="false"
+             pauseAfterEachHand="true"
+             sleepAfterActionMilliSeconds="500"
+             graphicsDisplay="true"
              />
   <Players>
     <Player dll="BetterBot.dll" />

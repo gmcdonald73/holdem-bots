@@ -290,7 +290,7 @@ namespace HoldemController.ConsoleDisplay
                 case ActionType.Show:
                     break;
                 case ActionType.Win:
-                    color = ConsoleColor.Blue;
+                    color = ConsoleColor.White;
                     break;
             }
             var player = _players[playerId];

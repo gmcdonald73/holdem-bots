@@ -232,6 +232,12 @@ namespace HoldemController
                 // Kill off broke players & check if only one player left
                 KillBrokePlayers();
 
+                if (_bPauseAfterEachHand)
+                {
+                    Console.WriteLine("--- Press any key to continue (ESC to exit) ---");
+                    bDone = Console.ReadKey().Key == ConsoleKey.Escape;
+                }
+
                 BroadcastEndHand();
 
                 if (GetNumLivePlayers() == 1)
@@ -248,11 +254,6 @@ namespace HoldemController
                     MoveDealerAndBlinds();
                 }
 
-                if(_bPauseAfterEachHand)
-                {
-                    Console.WriteLine("--- Press any key to continue (ESC to exit) ---");
-                    bDone = Console.ReadKey().Key == ConsoleKey.Escape;
-                }
             }
 
             EndOfGame();
