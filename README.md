@@ -308,9 +308,9 @@ Logging can be useful when:
 
 Three main log files are written during a run. They are:
 
-CallLog - This records all of the bot methods that were called by the controller, the parameters used, and how long each took
-GameLog - This record the same information that is displayed in the Console when graphicsDisplay = false.
-PlayerInfo - Summary stats for each player - there stack size after each hand, and how many hands played, how many showdowns, how many won etc.
+* CallLog - This records all of the bot methods that were called by the controller, the parameters used, and how long each took
+* GameLog - This records the same information that is displayed in the Console when graphicsDisplay = false.
+* PlayerInfo - Summary stats for each player - their stack size after each hand, how many hands played, how many showdowns, how many won etc.
 
 
 ---
